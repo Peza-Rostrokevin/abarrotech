@@ -1,0 +1,55 @@
+<div class="register-container">
+  <div class="register-card">
+    <h1>Registro de Vendedor</h1>
+    <p class="subtitle">Crea tu cuenta para vender en el catálogo</p>
+
+    <form (ngSubmit)="onSubmit()" #registerForm="ngForm">
+      <div class="form-group">
+        <label for="name">Nombre</label>
+        <input
+          type="text"
+          id="name"
+          name="name"
+          [(ngModel)]="name"
+          required
+          placeholder="Tu nombre o el de tu negocio"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          [(ngModel)]="email"
+          required
+          placeholder="tucorreo@ejemplo.com"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="password">Contraseña (mínimo 6 caracteres)</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          [(ngModel)]="password"
+          required
+          minlength="6"
+          placeholder="••••••••"
+        />
+      </div>
+
+      <div *ngIf="error" class="error-box">{{ error }}</div>
+
+      <button type="submit" class="btn-primary" [disabled]="loading">
+        {{ loading ? 'Registrando...' : 'Crear Cuenta' }}
+      </button>
+    </form>
+
+    <p class="login-link">
+      ¿Ya tienes cuenta? <a routerLink="/login">Inicia sesión</a>
+    </p>
+  </div>
+</div>

@@ -1,0 +1,45 @@
+<div class="catalogo-container">
+  <header class="catalogo-header">
+    <h1>AbarroTech</h1>
+    <p class="subtitle">Explora productos de nuestros vendedores</p>
+    <input
+      type="text"
+      [(ngModel)]="searchTerm"
+      (input)="onSearch()"
+      placeholder="Buscar por nombre, ubicación o descripción..."
+      class="search-input"
+    />
+  </header>
+
+  <div *ngIf="loading()" class="center-message">Cargando catálogo...</div>
+  <div *ngIf="error()" class="error-box">{{ error() }}</div>
+
+  <div *ngIf="!loading() && !error && filtered().length === 0" class="center-message">
+    No hay productos disponibles.
+  </div>
+
+  <div class="product-grid">
+    <div class="product-card" *ngFor="let product of filtered()">
+      <div class="product-image">
+        <img
+          *ngIf="product.imageUrl"
+          [src]="product.imageUrl"
+          [alt]="product.name"
+          loading="lazy"
+        />
+        <div *ngIf="!product.imageUrl" class="no-image">Sin imagen</div>
+      </div>
+      <div class="product-info">
+        <h3 class="product-name">{{ product.name }}</h3>
+        <p class="product-price">{{ product.price | currency: 'MXN' }}</p>
+        <p class="product-location">📍 {{ product.location }}</p>
+        <p *ngIf="product.description" class="product-description">
+          {{ product.description }}
+        </p>
+        <p *ngIf="getSellerName(product)" class="product-seller">
+          Vendido por: {{ getSellerName(product) }}
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

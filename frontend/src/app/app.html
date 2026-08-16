@@ -1,0 +1,20 @@
+<nav class="navbar">
+  <a routerLink="/" class="brand">AbarroTech</a>
+  <div class="nav-links">
+    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Catálogo</a>
+    <ng-container *ngIf="authService.currentUser() as user; else anon">
+      <a routerLink="/mis-productos" routerLinkActive="active">Mis Productos</a>
+      <a *ngIf="authService.isAdmin()" routerLink="/admin" routerLinkActive="active">Administración</a>
+      <span class="user-chip">{{ user.name }}</span>
+      <button class="btn-logout" (click)="authService.logout()">Salir</button>
+    </ng-container>
+    <ng-template #anon>
+      <a routerLink="/login" routerLinkActive="active">Iniciar Sesión</a>
+      <a routerLink="/registro" routerLinkActive="active">Registrarse</a>
+    </ng-template>
+  </div>
+</nav>
+
+<main>
+  <router-outlet />
+</main>
