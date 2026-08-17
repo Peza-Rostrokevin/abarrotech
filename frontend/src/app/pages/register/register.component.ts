@@ -34,11 +34,15 @@ export class RegisterComponent {
 
   onSubmit(): void {
     if (!this.name || !this.email || !this.password || !this.phone) {
-      this.error = 'Nombre, email, contraseña y teléfono son obligatorios';
+      this.error = 'Nombre, email, contraseña y WhatsApp son obligatorios';
       return;
     }
     if (this.password.length < 6) {
       this.error = 'La contraseña debe tener al menos 6 caracteres';
+      return;
+    }
+    if (!/^\d{10}$/.test(this.phone)) {
+      this.error = 'El WhatsApp debe tener exactamente 10 dígitos (solo números)';
       return;
     }
     if (!this.inviteToken) {

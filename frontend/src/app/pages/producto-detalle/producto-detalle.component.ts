@@ -56,8 +56,18 @@ export class ProductoDetalleComponent {
   }
 
   getWhatsAppUrl(): string {
-    const phone = this.getSellerPhone().replace(/\D/g, '');
-    if (!phone) return '';
-    return `https://wa.me/${phone}`;
+    const digits = this.getSellerPhone().replace(/\D/g, '');
+    if (!digits) return '';
+
+    let full = digits;
+    if (digits.length === 10) {
+      full = `52${digits}`;
+    } else if (digits.length === 11 && digits.startsWith('1')) {
+      full = `52${digits.slice(1)}`;
+    } else if (digits.length === 12 && digits.startsWith('52')) {
+      full = digits;
+    }
+
+    return `https://wa.me/${full}`;
   }
 }

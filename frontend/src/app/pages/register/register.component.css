@@ -56,6 +56,13 @@
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
+.field-hint {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
 .btn-primary {
   width: 100%;
   padding: 0.75rem;
