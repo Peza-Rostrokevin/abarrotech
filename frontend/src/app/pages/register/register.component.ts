@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 
 @Component({
@@ -13,20 +13,36 @@ import { AuthService } from '../../core/services/auth.service';
 export class RegisterComponent {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   name = '';
   email = '';
   password = '';
+  phone = '';
+  inviteToken = '';
   error = '';
   loading = false;
 
+  constructor() {
+    const token = this.route.snapshot.queryParamMap.get('token');
+    if (token) {
+      this.inviteToken = token;
+    } else {
+      this.error = 'El registro solo está disponible mediante invitación del administrador';
+    }
+  }
+
   onSubmit(): void {
-    if (!this.name || !this.email || !this.password) {
-      this.error = 'Nombre, email y contraseña son obligatorios';
+    if (!this.name || !this.email || !this.password || !this.phone) {
+      this.error = 'Nombre, email, contraseña y teléfono son obligatorios';
       return;
     }
     if (this.password.length < 6) {
       this.error = 'La contraseña debe tener al menos 6 caracteres';
+      return;
+    }
+    if (!this.inviteToken) {
+      this.error = 'Token de invitación requerido';
       return;
     }
 
@@ -34,7 +50,13 @@ export class RegisterComponent {
     this.error = '';
 
     this.authService
-      .register({ name: this.name, email: this.email, password: this.password })
+      .register({
+        name: this.name,
+        email: this.email,
+        password: this.password,
+        phone: this.phone,
+        inviteToken: this.inviteToken
+      })
       .subscribe({
         next: (user) => {
           this.loading = false;

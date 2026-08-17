@@ -1,12 +1,13 @@
 import { Component, inject, signal } from '@angular/core';
 import { NgIf, NgFor, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { Product } from '../../models/product.model';
 import { ProductService } from '../../core/services/product.service';
 
 @Component({
   selector: 'app-catalogo',
-  imports: [NgIf, NgFor, CurrencyPipe, FormsModule],
+  imports: [NgIf, NgFor, CurrencyPipe, FormsModule, RouterLink],
   templateUrl: './catalogo.component.html',
   styleUrl: './catalogo.component.css'
 })

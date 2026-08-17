@@ -36,6 +36,19 @@ const getMyProducts = async (req, res) => {
   }
 };
 
+const getProductById = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id).populate('sellerId', 'name email phone');
+    if (!product) {
+      return res.status(404).json({ message: 'Producto no encontrado' });
+    }
+    res.json(product);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al obtener el producto', error: error.message });
+  }
+};
+
 const createProduct = async (req, res) => {
   try {
     const { name, price, location, description } = req.body;
@@ -118,6 +131,7 @@ const deleteProduct = async (req, res) => {
 module.exports = {
   getAllProducts,
   getMyProducts,
+  getProductById,
   createProduct,
   updateProduct,
   deleteProduct

@@ -18,6 +18,10 @@ export class AdminComponent {
   readonly loading = signal(true);
   readonly error = signal('');
   readonly tab = signal<'vendedores' | 'productos'>('vendedores');
+  readonly inviteLink = signal('');
+  readonly inviteError = signal('');
+  readonly generatingInvite = signal(false);
+  readonly copied = signal(false);
 
   constructor() {
     this.loadData();
@@ -44,6 +48,33 @@ export class AdminComponent {
 
   setTab(tab: 'vendedores' | 'productos'): void {
     this.tab.set(tab);
+  }
+
+  onGenerateInvite(): void {
+    this.generatingInvite.set(true);
+    this.inviteError.set('');
+    this.copied.set(false);
+
+    this.adminService.generateInvite().subscribe({
+      next: (res) => {
+        this.generatingInvite.set(false);
+        const url = `${window.location.origin}/registro?token=${res.token}`;
+        this.inviteLink.set(url);
+      },
+      error: () => {
+        this.generatingInvite.set(false);
+        this.inviteError.set('Error al generar la invitación');
+      }
+    });
+  }
+
+  onCopyInvite(): void {
+    const link = this.inviteLink();
+    if (!link) return;
+    navigator.clipboard.writeText(link).then(() => {
+      this.copied.set(true);
+      setTimeout(() => this.copied.set(false), 2500);
+    });
   }
 
   onDeleteUser(user: User): void {

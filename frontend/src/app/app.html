@@ -1,5 +1,8 @@
 <nav class="navbar">
-  <a routerLink="/" class="brand">AbarroTech</a>
+  <a routerLink="/" class="brand">
+    <img src="/carrito blanco.png" alt="" class="brand-icon" />
+    AbarroTech
+  </a>
   <div class="nav-links">
     <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Catálogo</a>
     <ng-container *ngIf="authService.currentUser() as user; else anon">
@@ -10,7 +13,6 @@
     </ng-container>
     <ng-template #anon>
       <a routerLink="/login" routerLinkActive="active">Iniciar Sesión</a>
-      <a routerLink="/registro" routerLinkActive="active">Registrarse</a>
     </ng-template>
   </div>
 </nav>

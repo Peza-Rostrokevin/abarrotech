@@ -3,10 +3,26 @@ const { generateToken } = require('../utils/jwt');
 
 const register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, phone, inviteToken } = req.body;
 
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: 'Nombre, email y contraseña son obligatorios' });
+    if (!name || !email || !password || !phone) {
+      return res.status(400).json({ message: 'Nombre, email, contraseña y teléfono son obligatorios' });
+    }
+
+    if (!inviteToken) {
+      return res.status(403).json({ message: 'El registro solo está disponible mediante invitación del administrador' });
+    }
+
+    let invited;
+    try {
+      const jwt = require('jsonwebtoken');
+      invited = jwt.verify(inviteToken, process.env.JWT_SECRET);
+    } catch (error) {
+      return res.status(403).json({ message: 'Invitación inválida o expirada' });
+    }
+
+    if (invited.type !== 'invite') {
+      return res.status(403).json({ message: 'Invitación inválida' });
     }
 
     const userExists = await User.findOne({ email });
@@ -18,6 +34,7 @@ const register = async (req, res) => {
       name,
       email,
       password,
+      phone,
       role: 'vendedor'
     });
 
@@ -26,6 +43,7 @@ const register = async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
+      phone: user.phone,
       token: generateToken(user._id)
     });
   } catch (error) {
@@ -57,6 +75,7 @@ const login = async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
+      phone: user.phone,
       token: generateToken(user._id)
     });
   } catch (error) {
@@ -70,7 +89,8 @@ const getMe = async (req, res) => {
     _id: req.user._id,
     name: req.user.name,
     email: req.user.email,
-    role: req.user.role
+    role: req.user.role,
+    phone: req.user.phone
   });
 };
 

@@ -11,6 +11,10 @@
     />
   </header>
 
+  <div class="catalogo-watermark">
+    <img src="/logo abarrotech.png" alt="AbarroTech" />
+  </div>
+
   <div *ngIf="loading()" class="center-message">Cargando catálogo...</div>
   <div *ngIf="error()" class="error-box">{{ error() }}</div>
 
@@ -19,7 +23,7 @@
   </div>
 
   <div class="product-grid">
-    <div class="product-card" *ngFor="let product of filtered()">
+    <a class="product-card" *ngFor="let product of filtered()" [routerLink]="['/producto', product._id]">
       <div class="product-image">
         <img
           *ngIf="product.imageUrl"
@@ -40,6 +44,6 @@
           Vendido por: {{ getSellerName(product) }}
         </p>
       </div>
-    </div>
+    </a>
   </div>
 </div>

@@ -5,7 +5,7 @@ export interface Product {
   imageUrl: string;
   location: string;
   description: string;
-  sellerId: string | { _id: string; name: string; email?: string };
+  sellerId: string | { _id: string; name: string; email?: string; phone?: string };
   createdAt?: string;
   updatedAt?: string;
 }

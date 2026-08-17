@@ -3,7 +3,9 @@
     <h1>Registro de Vendedor</h1>
     <p class="subtitle">Crea tu cuenta para vender en el catálogo</p>
 
-    <form (ngSubmit)="onSubmit()" #registerForm="ngForm">
+    <div *ngIf="!inviteToken" class="error-box">{{ error }}</div>
+
+    <form *ngIf="inviteToken" (ngSubmit)="onSubmit()" #registerForm="ngForm">
       <div class="form-group">
         <label for="name">Nombre</label>
         <input
@@ -25,6 +27,18 @@
           [(ngModel)]="email"
           required
           placeholder="tucorreo@ejemplo.com"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="phone">Teléfono (WhatsApp) *</label>
+        <input
+          type="tel"
+          id="phone"
+          name="phone"
+          [(ngModel)]="phone"
+          required
+          placeholder="Ej: 3312345678"
         />
       </div>
 

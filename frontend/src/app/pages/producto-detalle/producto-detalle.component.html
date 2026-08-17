@@ -1,0 +1,47 @@
+<div class="detail-container">
+  <a routerLink="/" class="back-link">← Volver al catálogo</a>
+
+  <div *ngIf="loading()" class="center-message">Cargando producto...</div>
+  <div *ngIf="error()" class="error-box">{{ error() }}</div>
+
+  <div *ngIf="!loading() && product() as product" class="detail-card">
+    <div class="detail-image">
+      <img *ngIf="product.imageUrl" [src]="product.imageUrl" [alt]="product.name" />
+      <div *ngIf="!product.imageUrl" class="no-image">Sin imagen</div>
+    </div>
+
+    <div class="detail-info">
+      <h1 class="detail-name">{{ product.name }}</h1>
+      <p class="detail-price">{{ product.price | currency: 'MXN' }}</p>
+
+      <div class="detail-section">
+        <h3>📍 Ubicación</h3>
+        <p>{{ product.location }}</p>
+      </div>
+
+      <div class="detail-section" *ngIf="product.description">
+        <h3>📝 Descripción</h3>
+        <p>{{ product.description }}</p>
+      </div>
+
+      <div class="detail-section" *ngIf="getSellerName()">
+        <h3>👤 Vendedor</h3>
+        <p>{{ getSellerName() }}</p>
+      </div>
+
+      <a
+        *ngIf="getWhatsAppUrl()"
+        [href]="getWhatsAppUrl()"
+        target="_blank"
+        rel="noopener"
+        class="whatsapp-btn"
+      >
+        💬 Contactar por WhatsApp
+      </a>
+
+      <p class="detail-date" *ngIf="product.createdAt">
+        Publicado: {{ product.createdAt | date: 'medium' }}
+      </p>
+    </div>
+  </div>
+</div>

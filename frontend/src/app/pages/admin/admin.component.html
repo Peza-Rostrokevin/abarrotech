@@ -4,6 +4,24 @@
     <p class="subtitle">Gestiona vendedores y productos del catálogo</p>
   </header>
 
+  <div class="invite-section">
+    <button class="btn-invite" (click)="onGenerateInvite()" [disabled]="generatingInvite()">
+      {{ generatingInvite() ? 'Generando...' : '+ Invitar Vendedor' }}
+    </button>
+
+    <div *ngIf="inviteLink()" class="invite-box">
+      <p class="invite-label">Link de invitación (expira en 24 horas):</p>
+      <div class="invite-row">
+        <input type="text" readonly [value]="inviteLink()" />
+        <button class="btn-copy" (click)="onCopyInvite()">
+          {{ copied() ? '✓ Copiado' : 'Copiar' }}
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="inviteError()" class="error-box">{{ inviteError() }}</div>
+  </div>
+
   <div class="tabs">
     <button
       class="tab-btn"

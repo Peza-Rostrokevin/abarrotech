@@ -35,6 +35,77 @@
   margin-bottom: 1rem;
 }
 
+.invite-section {
+  margin-bottom: 1.5rem;
+}
+
+.btn-invite {
+  padding: 0.7rem 1.2rem;
+  background: #059669;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-invite:hover:not(:disabled) {
+  background: #047857;
+}
+
+.btn-invite:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.invite-box {
+  margin-top: 1rem;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.invite-label {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+  color: #065f46;
+  font-weight: 500;
+}
+
+.invite-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.invite-row input {
+  flex: 1;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  background: #fff;
+  color: #374151;
+}
+
+.btn-copy {
+  padding: 0.6rem 1rem;
+  background: #059669;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-copy:hover {
+  background: #047857;
+}
+
 .tabs {
   display: flex;
   gap: 0.5rem;

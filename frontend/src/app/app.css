@@ -21,6 +21,16 @@
   text-decoration: none;
   font-size: 1.2rem;
   font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.brand-icon {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
 }
 
 .nav-links {

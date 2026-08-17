@@ -1,5 +1,18 @@
 const User = require('../models/User');
 const Product = require('../models/Product');
+const jwt = require('jsonwebtoken');
+
+const generateInvite = async (req, res) => {
+  try {
+    const token = jwt.sign({ type: 'invite', by: req.user._id }, process.env.JWT_SECRET, {
+      expiresIn: '24h'
+    });
+    res.json({ token, expiresInHours: 24 });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al generar invitación', error: error.message });
+  }
+};
 
 const getUsers = async (req, res) => {
   try {
@@ -45,4 +58,4 @@ const deleteUser = async (req, res) => {
   }
 };
 
-module.exports = { getUsers, getAllProducts, deleteUser };
+module.exports = { getUsers, getAllProducts, deleteUser, generateInvite };

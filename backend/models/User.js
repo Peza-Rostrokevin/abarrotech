@@ -26,6 +26,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ['admin', 'vendedor'],
       default: 'vendedor'
+    },
+    phone: {
+      type: String,
+      trim: true
     }
   },
   {

@@ -1,0 +1,132 @@
+.detail-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 1.5rem;
+  color: #2563eb;
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+.center-message {
+  text-align: center;
+  padding: 3rem 0;
+  color: #6b7280;
+}
+
+.error-box {
+  background: #fee2e2;
+  color: #b91c1c;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.detail-card {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.detail-image {
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f3f4f6;
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.detail-image img {
+  width: 100%;
+  height: 100%;
+  max-height: 400px;
+  object-fit: cover;
+}
+
+.no-image {
+  color: #9ca3af;
+  padding: 3rem;
+}
+
+.detail-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.detail-name {
+  margin: 0;
+  font-size: 1.6rem;
+  color: #1f2937;
+}
+
+.detail-price {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #2563eb;
+  margin: 0;
+}
+
+.detail-section h3 {
+  margin: 0 0 0.35rem;
+  font-size: 0.9rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.detail-section p {
+  margin: 0;
+  color: #1f2937;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.detail-date {
+  color: #9ca3af;
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+.whatsapp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1.5rem;
+  background: #25d366;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: background 0.2s;
+  margin-top: 0.25rem;
+}
+
+.whatsapp-btn:hover {
+  background: #1eb857;
+}
+
+@media (max-width: 640px) {
+  .detail-card {
+    grid-template-columns: 1fr;
+  }
+}

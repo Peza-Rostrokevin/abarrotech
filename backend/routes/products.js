@@ -3,6 +3,7 @@ const router = express.Router();
 const {
   getAllProducts,
   getMyProducts,
+  getProductById,
   createProduct,
   updateProduct,
   deleteProduct
@@ -12,6 +13,7 @@ const { upload } = require('../config/upload');
 
 router.get('/', getAllProducts);
 router.get('/mine', protect, getMyProducts);
+router.get('/:id', getProductById);
 router.post('/', protect, upload.single('image'), createProduct);
 router.put('/:id', protect, upload.single('image'), updateProduct);
 router.delete('/:id', protect, deleteProduct);

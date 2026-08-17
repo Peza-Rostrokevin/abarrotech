@@ -17,6 +17,13 @@ export class AdminService {
     return this.http.get<Product[]>(`${this.apiUrl}/admin/products`);
   }
 
+  generateInvite(): Observable<{ token: string; expiresInHours: number }> {
+    return this.http.post<{ token: string; expiresInHours: number }>(
+      `${this.apiUrl}/admin/invite`,
+      {}
+    );
+  }
+
   deleteUser(id: string): Observable<{ message: string }> {
     return this.http.delete<{ message: string }>(`${this.apiUrl}/admin/users/${id}`);
   }
