@@ -1,8 +1,9 @@
 const Product = require('../models/Product');
+const { uploadImage } = require('../config/cloudinary');
 
-const imageUrlOf = (req) => {
+const imageUrlOf = async (req) => {
   if (req.file) {
-    return `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+    return await uploadImage(req.file.buffer);
   }
   return (req.body.imageUrl || '').trim();
 };
@@ -60,7 +61,7 @@ const createProduct = async (req, res) => {
     const product = await Product.create({
       name,
       price,
-      imageUrl: imageUrlOf(req),
+      imageUrl: await imageUrlOf(req),
       location,
       description: description || '',
       sellerId: req.user._id
@@ -91,7 +92,7 @@ const updateProduct = async (req, res) => {
     product.name = name ?? product.name;
     product.price = price ?? product.price;
     if (req.file) {
-      product.imageUrl = imageUrlOf(req);
+      product.imageUrl = await imageUrlOf(req);
     } else if (req.body.imageUrl !== undefined) {
       product.imageUrl = req.body.imageUrl.trim();
     }

@@ -1,0 +1,96 @@
+<div class="perfil-container">
+  <header class="page-header">
+    <h1>Mi Perfil</h1>
+    <p class="subtitle">Edita tus datos personales y cambia tu contraseña</p>
+  </header>
+
+  <div class="perfil-grid">
+    <!-- Datos personales -->
+    <div class="card">
+      <h2>Datos Personales</h2>
+
+      <form (ngSubmit)="onSaveProfile()" #profileForm="ngForm">
+        <div class="form-group">
+          <label for="name">Nombre</label>
+          <input type="text" id="name" name="name" [(ngModel)]="profile.name" required />
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" [(ngModel)]="profile.email" required />
+        </div>
+
+        <div class="form-group">
+          <label for="phone">WhatsApp *</label>
+          <input
+            type="tel"
+            id="phone"
+            name="phone"
+            [(ngModel)]="profile.phone"
+            required
+            maxlength="10"
+            minlength="10"
+            pattern="[0-9]{10}"
+            placeholder="10 dígitos, ej: 3312345678"
+          />
+          <small class="field-hint">10 dígitos, sin espacios ni guiones</small>
+        </div>
+
+        <div *ngIf="profileError" class="error-box">{{ profileError }}</div>
+        <div *ngIf="profileSuccess" class="success-box">{{ profileSuccess }}</div>
+
+        <button type="submit" class="btn-primary" [disabled]="savingProfile">
+          {{ savingProfile ? 'Guardando...' : 'Guardar Datos' }}
+        </button>
+      </form>
+    </div>
+
+    <!-- Cambiar contraseña -->
+    <div class="card">
+      <h2>Cambiar Contraseña</h2>
+
+      <form (ngSubmit)="onChangePassword()" #passwordForm="ngForm">
+        <div class="form-group">
+          <label for="currentPassword">Contraseña actual</label>
+          <input
+            type="password"
+            id="currentPassword"
+            name="currentPassword"
+            [(ngModel)]="password.currentPassword"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="newPassword">Nueva contraseña (mínimo 6 caracteres)</label>
+          <input
+            type="password"
+            id="newPassword"
+            name="newPassword"
+            [(ngModel)]="password.newPassword"
+            required
+            minlength="6"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="confirmPassword">Confirmar nueva contraseña</label>
+          <input
+            type="password"
+            id="confirmPassword"
+            name="confirmPassword"
+            [(ngModel)]="password.confirmPassword"
+            required
+          />
+        </div>
+
+        <div *ngIf="passwordError" class="error-box">{{ passwordError }}</div>
+        <div *ngIf="passwordSuccess" class="success-box">{{ passwordSuccess }}</div>
+
+        <button type="submit" class="btn-primary" [disabled]="savingPassword">
+          {{ savingPassword ? 'Cambiando...' : 'Cambiar Contraseña' }}
+        </button>
+      </form>
+    </div>
+  </div>
+</div>

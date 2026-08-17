@@ -94,4 +94,68 @@ const getMe = async (req, res) => {
   });
 };
 
-module.exports = { register, login, getMe };
+const updateProfile = async (req, res) => {
+  try {
+    const { name, email, phone } = req.body;
+
+    if (!name || !email || !phone) {
+      return res.status(400).json({ message: 'Nombre, email y WhatsApp son obligatorios' });
+    }
+
+    if (!/^\d{10}$/.test(phone)) {
+      return res.status(400).json({ message: 'El WhatsApp debe tener exactamente 10 dígitos' });
+    }
+
+    if (email !== req.user.email) {
+      const exists = await User.findOne({ email });
+      if (exists) {
+        return res.status(400).json({ message: 'Ya existe un usuario con ese email' });
+      }
+    }
+
+    req.user.name = name;
+    req.user.email = email;
+    req.user.phone = phone;
+    await req.user.save();
+
+    res.json({
+      _id: req.user._id,
+      name: req.user.name,
+      email: req.user.email,
+      role: req.user.role,
+      phone: req.user.phone
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al actualizar perfil', error: error.message });
+  }
+};
+
+const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'Contraseña actual y nueva son obligatorias' });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: 'La nueva contraseña debe tener al menos 6 caracteres' });
+    }
+
+    const user = await User.findById(req.user._id).select('+password');
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'La contraseña actual es incorrecta' });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.json({ message: 'Contraseña actualizada correctamente' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al cambiar contraseña', error: error.message });
+  }
+};
+
+module.exports = { register, login, getMe, updateProfile, changePassword };

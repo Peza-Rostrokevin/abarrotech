@@ -32,6 +32,16 @@ export class AuthService {
     );
   }
 
+  updateProfile(data: { name: string; email: string; phone: string }): Observable<User> {
+    return this.http.put<User>(`${this.apiUrl}/auth/profile`, data).pipe(
+      tap((user) => this.updateStoredUser(user))
+    );
+  }
+
+  changePassword(data: { currentPassword: string; newPassword: string }): Observable<{ message: string }> {
+    return this.http.put<{ message: string }>(`${this.apiUrl}/auth/password`, data);
+  }
+
   logout(): void {
     localStorage.removeItem(this.TOKEN_KEY);
     localStorage.removeItem(this.USER_KEY);
@@ -56,6 +66,13 @@ export class AuthService {
     const { token: _token, ...safeUser } = user;
     localStorage.setItem(this.USER_KEY, JSON.stringify(safeUser));
     this.currentUser.set(safeUser);
+  }
+
+  private updateStoredUser(user: User): void {
+    const current = this.currentUser();
+    const updated = { ...current, ...user };
+    localStorage.setItem(this.USER_KEY, JSON.stringify(updated));
+    this.currentUser.set(updated);
   }
 
   private getStoredUser(): User | null {
