@@ -5,14 +5,34 @@
   <div *ngIf="error()" class="error-box">{{ error() }}</div>
 
   <div *ngIf="!loading() && product() as product" class="detail-card">
-    <div class="detail-image">
+    <div class="detail-image" [class.image-disabled]="!product.isAvailable">
       <img *ngIf="product.imageUrl" [src]="product.imageUrl" [alt]="product.name" />
       <div *ngIf="!product.imageUrl" class="no-image">Sin imagen</div>
+      <div *ngIf="!product.isAvailable" class="unavailable-overlay">
+        <span>NO DISPONIBLE</span>
+      </div>
     </div>
 
     <div class="detail-info">
+      <div class="detail-badges">
+        <span class="badge badge-type">{{ product.type === 'servicio' ? 'SERVICIO' : 'PRODUCTO' }}</span>
+        <span *ngIf="product.isMadeToOrder" class="badge badge-order">SOBRE PEDIDO</span>
+        <span *ngIf="!product.isAvailable" class="badge badge-unavailable">NO DISPONIBLE</span>
+      </div>
+
       <h1 class="detail-name">{{ product.name }}</h1>
-      <p class="detail-price">{{ product.price | currency: 'MXN' }}</p>
+      <div class="detail-price-row">
+        <p class="detail-price">{{ getPriceLabel() }}</p>
+        <button
+          class="like-btn"
+          [class.liked]="isLiked()"
+          (click)="onToggleLike()"
+          aria-label="Me gusta"
+        >
+          <span class="heart">♥</span>
+          <span class="like-count">{{ product.likes }}</span>
+        </button>
+      </div>
 
       <div class="detail-section">
         <h3>📍 Ubicación</h3>
@@ -36,7 +56,7 @@
         rel="noopener"
         class="whatsapp-btn"
       >
-        💬 Contactar por WhatsApp
+        💬 {{ getWhatsAppText() }}
       </a>
 
       <p class="detail-date" *ngIf="product.createdAt">

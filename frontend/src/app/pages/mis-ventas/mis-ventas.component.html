@@ -1,0 +1,259 @@
+<div class="page-container">
+  <header class="page-header">
+    <h1>Mis Ventas</h1>
+    <p class="subtitle">Registra ventas, cobra pendientes y consulta tus ganancias</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab-btn" [class.active]="tab() === 'vender'" (click)="setTab('vender')">
+      Vender
+    </button>
+    <button class="tab-btn" [class.active]="tab() === 'pendientes'" (click)="setTab('pendientes')">
+      Pendientes
+    </button>
+    <button class="tab-btn" [class.active]="tab() === 'reportes'" (click)="setTab('reportes')">
+      Reportes
+    </button>
+  </div>
+
+  <!-- ============ VENDER ============ -->
+  <div *ngIf="tab() === 'vender'">
+    <div *ngIf="loading()" class="center-message">Cargando productos...</div>
+    <div *ngIf="error()" class="error-box">{{ error() }}</div>
+
+    <div *ngIf="!loading()" class="pos-layout">
+      <div class="pos-products">
+        <h3 class="section-title">Productos (clic para agregar)</h3>
+        <div class="pos-grid">
+          <button
+            *ngFor="let product of products()"
+            class="pos-card"
+            [class.disabled]="!getAvailable(product)"
+            (click)="getAvailable(product) && addToCart(product)"
+          >
+            <div class="pos-card-img">
+              <img *ngIf="product.imageUrl" [src]="product.imageUrl" [alt]="product.name" />
+              <span *ngIf="!product.imageUrl">Sin imagen</span>
+            </div>
+            <div class="pos-card-info">
+              <p class="pos-card-name">{{ product.name }}</p>
+              <p class="pos-card-price">
+                {{ product.price !== null && product.price !== undefined ? (product.price | currency: 'MXN') : 'Cotizar' }}
+              </p>
+              <p class="pos-card-stock">{{ getStockLabel(product) }}</p>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <div class="pos-cart">
+        <h3 class="section-title">Carrito</h3>
+        <div *ngIf="cart.length === 0" class="cart-empty">
+          Haz clic en los productos para agregarlos
+        </div>
+
+        <div class="cart-items" *ngIf="cart.length > 0">
+          <div class="cart-item" *ngFor="let item of cart">
+            <div class="cart-item-info">
+              <p class="cart-item-name">{{ item.name }}</p>
+              <p class="cart-item-price">${{ (item.price * item.quantity).toFixed(2) }}</p>
+            </div>
+            <div class="cart-item-controls">
+              <button class="qty-btn" (click)="changeQuantity(item, -1)">−</button>
+              <span class="qty-value">{{ item.quantity }}</span>
+              <button class="qty-btn" (click)="changeQuantity(item, 1)">+</button>
+              <button class="remove-btn" (click)="removeFromCart(item)">✕</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="cart-total">
+          <span>Total:</span>
+          <span>${{ getCartTotal().toFixed(2) }}</span>
+        </div>
+
+        <div class="payment-method">
+          <label class="radio-label">
+            <input type="radio" [(ngModel)]="paymentMethod" value="efectivo" name="payment" />
+            Efectivo
+          </label>
+          <label class="radio-label">
+            <input type="radio" [(ngModel)]="paymentMethod" value="tarjeta" name="payment" />
+            Tarjeta
+          </label>
+          <label class="radio-label">
+            <input type="radio" [(ngModel)]="paymentMethod" value="pendiente" name="payment" />
+            Pendiente
+          </label>
+        </div>
+
+        <div class="form-group" *ngIf="paymentMethod === 'pendiente'">
+          <label for="customerName">Nombre del cliente *</label>
+          <input
+            type="text"
+            id="customerName"
+            [(ngModel)]="customerName"
+            name="customerName"
+            placeholder="¿Quién debe?"
+          />
+        </div>
+
+        <div *ngIf="saleError" class="error-box">{{ saleError }}</div>
+        <div *ngIf="saleMessage" class="success-box">{{ saleMessage }}</div>
+
+        <div class="cart-actions">
+          <button class="btn-secondary" (click)="clearCart()">Limpiar</button>
+          <button class="btn-primary" (click)="onSubmitSale()" [disabled]="selling || cart.length === 0">
+            {{ selling ? 'Registrando...' : paymentMethod === 'pendiente' ? 'Registrar deuda' : 'Cobrar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PENDIENTES ============ -->
+  <div *ngIf="tab() === 'pendientes'">
+    <div *ngIf="pendingLoading" class="center-message">Cargando clientes pendientes...</div>
+
+    <div *ngIf="!pendingLoading && pendingCustomers().length === 0" class="center-message">
+      No hay deudas pendientes.
+    </div>
+
+    <div *ngIf="payMessage" class="success-box">{{ payMessage }}</div>
+    <div *ngIf="payError" class="error-box">{{ payError }}</div>
+
+    <div class="customer-card" *ngFor="let customer of pendingCustomers()">
+      <div class="customer-header">
+        <div>
+          <h3 class="customer-name">{{ customer.customerName }}</h3>
+          <p class="customer-debt">
+            Debe: <strong>${{ customer.totalDebt.toFixed(2) }}</strong>
+          </p>
+        </div>
+        <div class="pay-row">
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            [(ngModel)]="payAmounts[customer.customerName]"
+            placeholder="Abono"
+            class="pay-input"
+          />
+          <button class="btn-primary" (click)="onPayCustomer(customer)">Abonar</button>
+        </div>
+      </div>
+
+      <div class="customer-sales">
+        <div class="sale-block" *ngFor="let sale of customer.sales">
+          <div class="sale-date">
+            {{ sale.createdAt | date: 'medium' }}
+            <span class="sale-remaining">Saldo: ${{ sale.remaining.toFixed(2) }}</span>
+            <button class="delete-debt-btn" (click)="onDeleteSale(sale._id, customer.customerName)">
+              🗑 Eliminar deuda
+            </button>
+          </div>
+          <div class="sale-items">
+            <div class="sale-item" *ngFor="let item of sale.items">
+              <span>{{ item.quantity }} × {{ item.name }}</span>
+              <span>${{ (item.price * item.quantity).toFixed(2) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ REPORTES ============ -->
+  <div *ngIf="tab() === 'reportes'">
+    <div class="report-filters">
+      <div class="form-group">
+        <label for="reportFrom">Desde</label>
+        <input type="date" id="reportFrom" [(ngModel)]="reportFrom" name="reportFrom" />
+      </div>
+      <div class="form-group">
+        <label for="reportTo">Hasta</label>
+        <input type="date" id="reportTo" [(ngModel)]="reportTo" name="reportTo" />
+      </div>
+      <button class="btn-primary" (click)="onLoadReport()" [disabled]="reportLoading">
+        {{ reportLoading ? 'Cargando...' : 'Generar reporte' }}
+      </button>
+    </div>
+
+    <div *ngIf="reportError" class="error-box">{{ reportError }}</div>
+
+    <div *ngIf="!reportLoading && reportSales().length > 0">
+      <div class="report-totals">
+        <div class="total-card">
+          <p class="total-label">Ventas</p>
+          <p class="total-value">{{ getReportTotals().count }}</p>
+        </div>
+        <div class="total-card">
+          <p class="total-label">Ingresos (vendido)</p>
+          <p class="total-value">${{ getReportTotals().revenue.toFixed(2) }}</p>
+        </div>
+        <div class="total-card">
+          <p class="total-label">Cobrado</p>
+          <p class="total-value">${{ getReportTotals().collected.toFixed(2) }}</p>
+        </div>
+        <div class="total-card">
+          <p class="total-label">Pendiente</p>
+          <p class="total-value">${{ getReportTotals().pending.toFixed(2) }}</p>
+        </div>
+      </div>
+
+      <div class="report-section">
+        <h3 class="section-title">Desglose por producto</h3>
+        <p class="cost-hint">
+          Escribe el costo unitario de cada producto para calcular tu ganancia real (no se guarda)
+        </p>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Vendido</th>
+                <th>Costo unitario</th>
+                <th>Costo total</th>
+                <th>Ganancia</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let product of getReportProducts()">
+                <td>{{ product.name }}</td>
+                <td>{{ product.quantity }}</td>
+                <td>${{ product.revenue.toFixed(2) }}</td>
+                <td>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    class="cost-input"
+                    [(ngModel)]="costs[product.name]"
+                    placeholder="0.00"
+                  />
+                </td>
+                <td>${{ ((costs[product.name] || 0) * product.quantity).toFixed(2) }}</td>
+                <td class="profit-cell">
+                  ${{ (product.revenue - (costs[product.name] || 0) * product.quantity).toFixed(2) }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="profit-summary">
+          <span>Ingresos: <strong>${{ getReportProfit().revenue.toFixed(2) }}</strong></span>
+          <span>Costos: <strong>${{ getReportProfit().cost.toFixed(2) }}</strong></span>
+          <span class="profit-total">
+            Ganancia real: <strong>${{ getReportProfit().profit.toFixed(2) }}</strong>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="!reportLoading && reportSales().length === 0 && reportFrom && reportTo" class="center-message">
+      No hay ventas en el rango seleccionado.
+    </div>
+  </div>
+</div>

@@ -64,7 +64,7 @@ export class RegisterComponent {
       .subscribe({
         next: (user) => {
           this.loading = false;
-          this.router.navigate([user.role === 'admin' ? '/admin' : '/mis-productos']);
+          this.router.navigate([user.role === 'admin' ? '/admin' : '/mis-ventas']);
         },
         error: (err) => {
           this.loading = false;

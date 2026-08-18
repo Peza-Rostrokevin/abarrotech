@@ -9,8 +9,36 @@ const productSchema = new mongoose.Schema(
     },
     price: {
       type: Number,
-      required: [true, 'El precio es obligatorio'],
-      min: [0, 'El precio no puede ser negativo']
+      min: [0, 'El precio no puede ser negativo'],
+      default: null
+    },
+    type: {
+      type: String,
+      enum: ['producto', 'servicio'],
+      default: 'producto'
+    },
+    stock: {
+      type: Number,
+      min: [0, 'El stock no puede ser negativo'],
+      default: 0
+    },
+    isAvailable: {
+      type: Boolean,
+      default: true
+    },
+    isMadeToOrder: {
+      type: Boolean,
+      default: false
+    },
+    likes: {
+      type: Number,
+      default: 0,
+      min: [0, 'Los likes no pueden ser negativos']
+    },
+    categoryId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Category',
+      default: null
     },
     imageUrl: {
       type: String,

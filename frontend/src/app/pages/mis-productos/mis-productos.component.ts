@@ -2,7 +2,9 @@ import { Component, inject, signal } from '@angular/core';
 import { NgIf, NgFor, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Product, ProductPayload } from '../../models/product.model';
+import { Category } from '../../models/category.model';
 import { ProductService } from '../../core/services/product.service';
+import { CategoryService } from '../../core/services/category.service';
 
 @Component({
   selector: 'app-mis-productos',
@@ -12,8 +14,10 @@ import { ProductService } from '../../core/services/product.service';
 })
 export class MisProductosComponent {
   private readonly productService = inject(ProductService);
+  private readonly categoryService = inject(CategoryService);
 
   readonly products = signal<Product[]>([]);
+  readonly categories = signal<Category[]>([]);
   readonly loading = signal(true);
   readonly error = signal('');
   readonly showForm = signal(false);
@@ -22,6 +26,11 @@ export class MisProductosComponent {
   form = {
     name: '',
     price: 0,
+    type: 'producto' as 'producto' | 'servicio',
+    stock: 0,
+    isAvailable: true,
+    isMadeToOrder: false,
+    categoryId: '',
     location: '',
     description: ''
   };
@@ -32,6 +41,64 @@ export class MisProductosComponent {
 
   constructor() {
     this.loadMyProducts();
+    this.loadCategories();
+  }
+
+  private loadCategories(): void {
+    this.categoryService.getAllCategories().subscribe({
+      next: (categories) => this.categories.set(categories),
+      error: () => {
+        // Silencioso: la categoría es opcional
+      }
+    });
+  }
+
+  getCategoryName(categoryId: string | null | { _id: string; name: string } | undefined): string {
+    if (!categoryId) return 'Sin categoría';
+    if (typeof categoryId !== 'string') return categoryId.name;
+    const cat = this.categories().find((c) => c._id === categoryId);
+    return cat?.name ?? 'Sin categoría';
+  }
+
+  get isProduct(): boolean {
+    return this.form.type === 'producto';
+  }
+
+  get isStockBased(): boolean {
+    return this.isProduct && !this.form.isMadeToOrder;
+  }
+
+  get priceRequired(): boolean {
+    return this.isProduct;
+  }
+
+  onTypeChange(): void {
+    if (this.form.type === 'servicio') {
+      this.form.stock = 0;
+      this.form.isMadeToOrder = false;
+    }
+    this.syncAvailability();
+  }
+
+  onMadeToOrderChange(): void {
+    if (this.form.isMadeToOrder) {
+      this.form.stock = 0;
+    }
+    this.syncAvailability();
+  }
+
+  onStockChange(): void {
+    this.syncAvailability();
+  }
+
+  onNotAvailableChange(checked: boolean): void {
+    this.form.isAvailable = !checked;
+  }
+
+  private syncAvailability(): void {
+    if (this.isStockBased) {
+      this.form.isAvailable = this.form.stock > 0;
+    }
   }
 
   private loadMyProducts(): void {
@@ -57,7 +124,12 @@ export class MisProductosComponent {
     this.editingId.set(product._id);
     this.form = {
       name: product.name,
-      price: product.price,
+      price: product.price ?? 0,
+      type: product.type ?? 'producto',
+      stock: product.stock ?? 0,
+      isAvailable: product.isAvailable ?? true,
+      isMadeToOrder: product.isMadeToOrder ?? false,
+      categoryId: typeof product.categoryId === 'string' ? product.categoryId : '',
       location: product.location,
       description: product.description
     };
@@ -93,21 +165,31 @@ export class MisProductosComponent {
   }
 
   onSubmit(): void {
-    if (!this.form.name || this.form.price <= 0 || !this.form.location) {
-      this.formError = 'Nombre, precio y ubicación son obligatorios';
+    if (!this.form.name || !this.form.location) {
+      this.formError = 'Nombre y ubicación son obligatorios';
+      return;
+    }
+    if (this.isProduct && (this.form.price === null || this.form.price === undefined || this.form.price <= 0)) {
+      this.formError = 'El precio es obligatorio para productos';
       return;
     }
     if (!this.selectedFile && !this.previewUrl) {
-      this.formError = 'Debes seleccionar una imagen del producto';
+      this.formError = 'Debes seleccionar una imagen';
       return;
     }
 
+    this.syncAvailability();
     this.saving = true;
     this.formError = '';
 
     const payload: ProductPayload = {
       name: this.form.name,
-      price: this.form.price,
+      price: this.isProduct ? this.form.price : (this.form.price > 0 ? this.form.price : null),
+      type: this.form.type,
+      stock: this.isStockBased ? this.form.stock : 0,
+      isAvailable: this.form.isAvailable,
+      isMadeToOrder: this.isProduct && this.form.isMadeToOrder,
+      categoryId: this.form.categoryId || null,
       location: this.form.location,
       description: this.form.description,
       imageFile: this.selectedFile
@@ -144,7 +226,17 @@ export class MisProductosComponent {
   }
 
   private resetForm(): void {
-    this.form = { name: '', price: 0, location: '', description: '' };
+    this.form = {
+      name: '',
+      price: 0,
+      type: 'producto',
+      stock: 0,
+      isAvailable: true,
+      isMadeToOrder: false,
+      categoryId: '',
+      location: '',
+      description: ''
+    };
     this.selectedFile = null;
     this.previewUrl = '';
     this.formError = '';

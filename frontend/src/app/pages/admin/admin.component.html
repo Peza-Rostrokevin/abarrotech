@@ -4,39 +4,76 @@
     <p class="subtitle">Gestiona vendedores y productos del catálogo</p>
   </header>
 
-  <div class="invite-section">
-    <button class="btn-invite" (click)="onGenerateInvite()" [disabled]="generatingInvite()">
-      {{ generatingInvite() ? 'Generando...' : '+ Invitar Vendedor' }}
-    </button>
-
-    <div *ngIf="inviteLink()" class="invite-box">
-      <p class="invite-label">Link de invitación (expira en 24 horas):</p>
-      <div class="invite-row">
-        <input type="text" readonly [value]="inviteLink()" />
-        <button class="btn-copy" (click)="onCopyInvite()">
-          {{ copied() ? '✓ Copiado' : 'Copiar' }}
-        </button>
-      </div>
+  <div class="admin-toolbar">
+    <div class="tabs">
+      <button
+        class="tab-btn"
+        [class.active]="tab() === 'vendedores'"
+        (click)="setTab('vendedores')"
+      >
+        Vendedores ({{ users().length }})
+      </button>
+      <button
+        class="tab-btn"
+        [class.active]="tab() === 'productos'"
+        (click)="setTab('productos')"
+      >
+        Productos ({{ products().length }})
+      </button>
+      <button
+        class="tab-btn"
+        [class.active]="tab() === 'categorias'"
+        (click)="setTab('categorias')"
+      >
+        Categorías ({{ categories().length }})
+      </button>
     </div>
 
-    <div *ngIf="inviteError()" class="error-box">{{ inviteError() }}</div>
+    <div class="invite-section" *ngIf="tab() === 'vendedores'">
+      <button class="btn-invite" (click)="onGenerateInvite()" [disabled]="generatingInvite()">
+        {{ generatingInvite() ? 'Generando...' : '+ Invitar Vendedor' }}
+      </button>
+    </div>
+
+    <div class="invite-section" *ngIf="tab() === 'categorias'">
+      <button class="btn-invite" (click)="onNewCategory()">
+        + Crear Categoría
+      </button>
+    </div>
   </div>
 
-  <div class="tabs">
-    <button
-      class="tab-btn"
-      [class.active]="tab() === 'vendedores'"
-      (click)="setTab('vendedores')"
-    >
-      Vendedores ({{ users().length }})
-    </button>
-    <button
-      class="tab-btn"
-      [class.active]="tab() === 'productos'"
-      (click)="setTab('productos')"
-    >
-      Productos ({{ products().length }})
-    </button>
+  <div *ngIf="inviteLink() && tab() === 'vendedores'" class="invite-box">
+    <p class="invite-label">Link de invitación (expira en 24 horas):</p>
+    <div class="invite-row">
+      <input type="text" readonly [value]="inviteLink()" />
+      <button class="btn-copy" (click)="onCopyInvite()">
+        {{ copied() ? '✓ Copiado' : 'Copiar' }}
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="inviteError() && tab() === 'vendedores'" class="error-box">{{ inviteError() }}</div>
+
+  <!-- Formulario de categorías (se muestra al dar clic en agregar) -->
+  <div *ngIf="showCategoryForm" class="category-form-card">
+    <h3>{{ editingCategoryId ? 'Editar Categoría' : 'Nueva Categoría' }}</h3>
+    <form (ngSubmit)="onSaveCategory()" class="category-form">
+      <input
+        #categoryInput
+        type="text"
+        [(ngModel)]="categoryName"
+        name="categoryName"
+        placeholder="Nombre de la categoría (ej: Bebidas)"
+      />
+      <button type="submit" class="btn-invite" [disabled]="savingCategory">
+        {{ savingCategory ? 'Guardando...' : 'Guardar' }}
+      </button>
+      <button type="button" class="btn-secondary" (click)="onCancelEditCategory()">
+        Cancelar
+      </button>
+    </form>
+    <div *ngIf="categoryError()" class="error-box">{{ categoryError() }}</div>
+    <div *ngIf="categorySuccess()" class="success-box">{{ categorySuccess() }}</div>
   </div>
 
   <div *ngIf="loading()" class="center-message">Cargando...</div>
@@ -104,6 +141,37 @@
             <td>{{ product.price | currency: 'MXN' }}</td>
             <td>{{ product.location }}</td>
             <td>{{ getSellerName(product) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Categorías -->
+  <div *ngIf="!loading() && tab() === 'categorias'">
+    <div *ngIf="categoriesLoading()" class="center-message">Cargando categorías...</div>
+
+    <div *ngIf="!categoriesLoading() && categories().length === 0" class="center-message">
+      Aún no hay categorías. Crea la primera para organizar los productos.
+    </div>
+
+    <div class="table-wrapper" *ngIf="!categoriesLoading() && categories().length > 0">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Creada</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let category of categories()">
+            <td>{{ category.name }}</td>
+            <td>{{ category.createdAt ? (category.createdAt | date: 'short') : '-' }}</td>
+            <td class="action-cell">
+              <button class="btn-edit" (click)="onEditCategory(category)">Editar</button>
+              <button class="btn-delete" (click)="onDeleteCategory(category)">Eliminar</button>
+            </td>
           </tr>
         </tbody>
       </table>

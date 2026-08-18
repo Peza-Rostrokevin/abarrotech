@@ -9,6 +9,62 @@
       placeholder="Buscar por nombre, ubicación o descripción..."
       class="search-input"
     />
+
+    <div class="filter-bar">
+      <select [(ngModel)]="selectedCategoryId" (ngModelChange)="applyFilters()" class="filter-select">
+        <option value="">Todas las categorías</option>
+        <option *ngFor="let category of categories()" [value]="category._id">
+          {{ category.name }}
+        </option>
+      </select>
+
+      <select [(ngModel)]="selectedSellerId" (ngModelChange)="applyFilters()" class="filter-select">
+        <option value="">Todos los vendedores</option>
+        <option *ngFor="let seller of getSellers()" [value]="seller.id">
+          {{ seller.name }}
+        </option>
+      </select>
+
+      <select [(ngModel)]="sortOption" (ngModelChange)="applyFilters()" class="filter-select">
+        <option value="gustados">Más gustados</option>
+        <option value="recientes">Más recientes</option>
+        <option value="precio-asc">Precio: menor a mayor</option>
+        <option value="precio-desc">Precio: mayor a menor</option>
+        <option value="nombre-asc">Nombre A-Z</option>
+        <option value="nombre-desc">Nombre Z-A</option>
+      </select>
+    </div>
+
+    <div class="filter-mobile">
+      <button class="filter-toggle" (click)="toggleFilters()">
+        {{ filtersOpen ? 'Cerrar filtros ✕' : '⚙️ Filtros' }}
+      </button>
+
+      <div class="filter-panel" *ngIf="filtersOpen">
+        <select [(ngModel)]="selectedCategoryId" (ngModelChange)="applyFilters()" class="filter-select">
+          <option value="">Todas las categorías</option>
+          <option *ngFor="let category of categories()" [value]="category._id">
+            {{ category.name }}
+          </option>
+        </select>
+
+        <select [(ngModel)]="selectedSellerId" (ngModelChange)="applyFilters()" class="filter-select">
+          <option value="">Todos los vendedores</option>
+          <option *ngFor="let seller of getSellers()" [value]="seller.id">
+            {{ seller.name }}
+          </option>
+        </select>
+
+        <select [(ngModel)]="sortOption" (ngModelChange)="applyFilters()" class="filter-select">
+          <option value="gustados">Más gustados</option>
+          <option value="recientes">Más recientes</option>
+          <option value="precio-asc">Precio: menor a mayor</option>
+          <option value="precio-desc">Precio: mayor a menor</option>
+          <option value="nombre-asc">Nombre A-Z</option>
+          <option value="nombre-desc">Nombre Z-A</option>
+        </select>
+      </div>
+    </div>
   </header>
 
   <div class="catalogo-watermark">
@@ -18,13 +74,13 @@
   <div *ngIf="loading()" class="center-message">Cargando catálogo...</div>
   <div *ngIf="error()" class="error-box">{{ error() }}</div>
 
-  <div *ngIf="!loading() && !error && filtered().length === 0" class="center-message">
+  <div *ngIf="!loading() && !error() && filtered().length === 0" class="center-message empty-state">
     No hay productos disponibles.
   </div>
 
   <div class="product-grid">
     <a class="product-card" *ngFor="let product of filtered()" [routerLink]="['/producto', product._id]">
-      <div class="product-image">
+      <div class="product-image" [class.image-disabled]="!product.isAvailable">
         <img
           *ngIf="product.imageUrl"
           [src]="product.imageUrl"
@@ -32,10 +88,34 @@
           loading="lazy"
         />
         <div *ngIf="!product.imageUrl" class="no-image">Sin imagen</div>
+        <div *ngIf="!product.isAvailable" class="unavailable-overlay">
+          <span>NO DISPONIBLE</span>
+        </div>
+        <button
+          class="like-btn"
+          [class.liked]="isLiked(product._id)"
+          (click)="onToggleLike(product, $event)"
+          aria-label="Me gusta"
+        >
+          <span class="heart">♥</span>
+          <span class="like-count">{{ product.likes }}</span>
+        </button>
       </div>
       <div class="product-info">
+        <div class="product-badges">
+          <span *ngIf="product.isMadeToOrder" class="badge badge-order">SOBRE PEDIDO</span>
+          <span *ngIf="product.type === 'servicio'" class="badge badge-service">SERVICIO</span>
+          <span *ngIf="getCategoryName(product.categoryId)" class="badge badge-category">
+            {{ getCategoryName(product.categoryId) }}
+          </span>
+        </div>
         <h3 class="product-name">{{ product.name }}</h3>
-        <p class="product-price">{{ product.price | currency: 'MXN' }}</p>
+        <p class="product-price" *ngIf="product.price !== null && product.price !== undefined">
+          {{ product.price | currency: 'MXN' }}
+        </p>
+        <p class="product-price product-price-none" *ngIf="product.price === null || product.price === undefined">
+          Cotizar
+        </p>
         <p class="product-location">📍 {{ product.location }}</p>
         <p *ngIf="product.description" class="product-description">
           {{ product.description }}

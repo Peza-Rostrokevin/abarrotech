@@ -1,12 +1,12 @@
 import { Component, inject, signal } from '@angular/core';
-import { NgIf, CurrencyPipe, DatePipe } from '@angular/common';
+import { NgIf, DatePipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Product } from '../../models/product.model';
 import { ProductService } from '../../core/services/product.service';
 
 @Component({
   selector: 'app-producto-detalle',
-  imports: [NgIf, CurrencyPipe, DatePipe, RouterLink],
+  imports: [NgIf, DatePipe, RouterLink],
   templateUrl: './producto-detalle.component.html',
   styleUrl: './producto-detalle.component.css'
 })
@@ -68,6 +68,77 @@ export class ProductoDetalleComponent {
       full = digits;
     }
 
-    return `https://wa.me/${full}`;
+    const product = this.product();
+    const message = product
+      ? `Hola, me gustaría preguntar por el producto: ${product.name}`
+      : 'Hola, me gustaría preguntar por un producto';
+
+    return `https://wa.me/${full}?text=${encodeURIComponent(message)}`;
+  }
+
+  getWhatsAppText(): string {
+    const product = this.product();
+    if (!product) return 'Contactar por WhatsApp';
+
+    if (product.type === 'servicio' && (product.price === null || product.price === undefined)) {
+      return 'Cotízalo por WhatsApp';
+    }
+    if (product.type === 'producto' && product.isMadeToOrder) {
+      return 'Ordéname por WhatsApp';
+    }
+    return 'Contactar por WhatsApp';
+  }
+
+  getPriceLabel(): string {
+    const product = this.product();
+    if (!product) return '';
+    if (product.price === null || product.price === undefined) return 'Cotizar';
+    return `$${product.price.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+
+  isLiked(): boolean {
+    const product = this.product();
+    if (!product) return false;
+    const liked = localStorage.getItem('abarrotech_likes');
+    if (!liked) return false;
+    try {
+      return (JSON.parse(liked) as string[]).includes(product._id);
+    } catch {
+      return false;
+    }
+  }
+
+  onToggleLike(): void {
+    const product = this.product();
+    if (!product) return;
+
+    const liked = this.isLiked();
+    this.productService.toggleLike(product._id, liked ? 'unlike' : 'like').subscribe({
+      next: (res) => {
+        product.likes = res.likes;
+        this.updateLocalLikes(product._id, !liked);
+      },
+      error: () => {
+        // Silencioso
+      }
+    });
+  }
+
+  private updateLocalLikes(id: string, liked: boolean): void {
+    const raw = localStorage.getItem('abarrotech_likes');
+    let list: string[] = [];
+    if (raw) {
+      try {
+        list = JSON.parse(raw) as string[];
+      } catch {
+        list = [];
+      }
+    }
+    if (liked) {
+      if (!list.includes(id)) list.push(id);
+    } else {
+      list = list.filter((x) => x !== id);
+    }
+    localStorage.setItem('abarrotech_likes', JSON.stringify(list));
   }
 }

@@ -33,6 +33,12 @@ export const routes: Routes = [
       )
   },
   {
+    path: 'mis-ventas',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/mis-ventas/mis-ventas.component').then((m) => m.MisVentasComponent)
+  },
+  {
     path: 'perfil',
     canActivate: [authGuard],
     loadComponent: () => import('./pages/perfil/perfil.component').then((m) => m.PerfilComponent)

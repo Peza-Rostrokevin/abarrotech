@@ -32,7 +32,7 @@ export class LoginComponent {
     this.authService.login({ email: this.email, password: this.password }).subscribe({
       next: (user) => {
         this.loading = false;
-        this.router.navigate([user.role === 'admin' ? '/admin' : '/mis-productos']);
+        this.router.navigate([user.role === 'admin' ? '/admin' : '/mis-ventas']);
       },
       error: (err) => {
         this.loading = false;

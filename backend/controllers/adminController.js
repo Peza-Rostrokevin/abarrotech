@@ -1,12 +1,17 @@
 const User = require('../models/User');
 const Product = require('../models/Product');
+const Invite = require('../models/Invite');
 const jwt = require('jsonwebtoken');
 
 const generateInvite = async (req, res) => {
   try {
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
     const token = jwt.sign({ type: 'invite', by: req.user._id }, process.env.JWT_SECRET, {
       expiresIn: '24h'
     });
+
+    await Invite.create({ token, createdBy: req.user._id, expiresAt });
+
     res.json({ token, expiresInHours: 24 });
   } catch (error) {
     console.error(error);

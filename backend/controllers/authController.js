@@ -1,5 +1,7 @@
 const User = require('../models/User');
+const Invite = require('../models/Invite');
 const { generateToken } = require('../utils/jwt');
+const jwt = require('jsonwebtoken');
 
 const register = async (req, res) => {
   try {
@@ -13,9 +15,10 @@ const register = async (req, res) => {
       return res.status(403).json({ message: 'El registro solo está disponible mediante invitación del administrador' });
     }
 
+    const normalizedEmail = email.trim().toLowerCase();
+
     let invited;
     try {
-      const jwt = require('jsonwebtoken');
       invited = jwt.verify(inviteToken, process.env.JWT_SECRET);
     } catch (error) {
       return res.status(403).json({ message: 'Invitación inválida o expirada' });
@@ -25,18 +28,34 @@ const register = async (req, res) => {
       return res.status(403).json({ message: 'Invitación inválida' });
     }
 
-    const userExists = await User.findOne({ email });
+    const invite = await Invite.findOne({ token: inviteToken });
+    if (!invite) {
+      return res.status(403).json({ message: 'Invitación inválida o expirada' });
+    }
+    if (invite.used) {
+      return res.status(403).json({ message: 'Esta invitación ya fue utilizada' });
+    }
+    if (invite.expiresAt < new Date()) {
+      return res.status(403).json({ message: 'Invitación inválida o expirada' });
+    }
+
+    const userExists = await User.findOne({ email: normalizedEmail });
     if (userExists) {
       return res.status(400).json({ message: 'Ya existe un usuario con ese email' });
     }
 
     const user = await User.create({
       name,
-      email,
+      email: normalizedEmail,
       password,
       phone,
       role: 'vendedor'
     });
+
+    invite.used = true;
+    invite.usedBy = user._id;
+    invite.usedAt = new Date();
+    await invite.save();
 
     res.status(201).json({
       _id: user._id,
@@ -48,6 +67,9 @@ const register = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
+    if (error.code === 11000) {
+      return res.status(400).json({ message: 'Ya existe un usuario con ese email' });
+    }
     res.status(500).json({ message: 'Error al registrar usuario', error: error.message });
   }
 };

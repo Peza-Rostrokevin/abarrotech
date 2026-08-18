@@ -51,6 +51,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
 }
 
 .detail-image img {
@@ -58,6 +59,62 @@
   height: 100%;
   max-height: 400px;
   object-fit: cover;
+}
+
+.image-disabled img {
+  opacity: 0.35;
+  filter: grayscale(0.6);
+}
+
+.unavailable-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.unavailable-overlay span {
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  padding: 0.6rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.detail-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.badge-type {
+  background: #e0e7ff;
+  color: #4338ca;
+}
+
+.badge-order {
+  background: #d1fae5;
+  color: #047857;
+}
+
+.badge-unavailable {
+  background: #fee2e2;
+  color: #b91c1c;
 }
 
 .no-image {
@@ -82,6 +139,47 @@
   font-weight: 700;
   color: #2563eb;
   margin: 0;
+}
+
+.detail-price-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.like-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  padding: 0.45rem 0.85rem;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.like-btn:hover {
+  transform: scale(1.06);
+  background: #fee2e2;
+  border-color: #fca5a5;
+}
+
+.like-btn .heart {
+  font-size: 1.15rem;
+  color: #9ca3af;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.like-btn.liked .heart {
+  color: #ef4444;
+  transform: scale(1.15);
+}
+
+.like-count {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #374151;
 }
 
 .detail-section h3 {

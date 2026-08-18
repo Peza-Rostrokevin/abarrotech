@@ -1,7 +1,15 @@
+export type ProductType = 'producto' | 'servicio';
+
 export interface Product {
   _id: string;
   name: string;
-  price: number;
+  price: number | null;
+  type: ProductType;
+  stock: number;
+  isAvailable: boolean;
+  isMadeToOrder: boolean;
+  likes: number;
+  categoryId: string | null | { _id: string; name: string };
   imageUrl: string;
   location: string;
   description: string;
@@ -12,8 +20,13 @@ export interface Product {
 
 export interface ProductPayload {
   name: string;
-  price: number;
+  price: number | null;
+  type: ProductType;
+  stock: number;
+  isAvailable: boolean;
+  isMadeToOrder: boolean;
   location: string;
   description: string;
+  categoryId?: string | null;
   imageFile?: File | null;
 }

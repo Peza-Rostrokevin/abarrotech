@@ -13,6 +13,7 @@ export class PerfilComponent {
   private readonly authService = inject(AuthService);
 
   readonly user = this.authService.currentUser;
+  activeCard: 'datos' | 'password' = 'datos';
 
   profile = {
     name: '',
@@ -41,6 +42,10 @@ export class PerfilComponent {
         phone: u.phone ?? ''
       };
     }
+  }
+
+  toggleCard(card: 'datos' | 'password'): void {
+    this.activeCard = this.activeCard === card ? (card === 'datos' ? 'password' : 'datos') : card;
   }
 
   onSaveProfile(): void {

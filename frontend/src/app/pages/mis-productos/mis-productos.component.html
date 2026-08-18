@@ -4,7 +4,7 @@
       <h1>Mis Productos</h1>
       <p class="subtitle">Administra los productos que vendes</p>
     </div>
-    <button class="btn-primary" (click)="openCreateForm()">+ Agregar Producto</button>
+    <button *ngIf="!showForm()" class="btn-primary" (click)="openCreateForm()">+ Agregar Producto/Servicio</button>
   </header>
 
   <div *ngIf="loading()" class="center-message">Cargando...</div>
@@ -26,8 +26,77 @@
         </div>
 
         <div class="form-group">
-          <label for="price">Precio (MXN) *</label>
-          <input type="number" id="price" name="price" [(ngModel)]="form.price" required min="0" step="0.01" />
+          <label for="type">Tipo</label>
+          <select id="type" name="type" [(ngModel)]="form.type" (ngModelChange)="onTypeChange()">
+            <option value="producto">Producto</option>
+            <option value="servicio">Servicio</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="categoryId">Categoría</label>
+          <select id="categoryId" name="categoryId" [(ngModel)]="form.categoryId">
+            <option value="">Sin categoría</option>
+            <option *ngFor="let category of categories()" [value]="category._id">
+              {{ category.name }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="price">Precio (MXN) {{ priceRequired ? '*' : '(opcional)' }}</label>
+          <input
+            type="number"
+            id="price"
+            name="price"
+            [(ngModel)]="form.price"
+            [required]="priceRequired"
+            min="0"
+            step="0.01"
+            [placeholder]="priceRequired ? '' : 'Ej: 500 o déjalo vacío para cotizar'"
+          />
+        </div>
+
+        <div class="form-group" *ngIf="isProduct">
+          <label for="stock">Stock (piezas disponibles)</label>
+          <input
+            type="number"
+            id="stock"
+            name="stock"
+            [(ngModel)]="form.stock"
+            (ngModelChange)="onStockChange()"
+            min="0"
+            step="1"
+            [disabled]="form.isMadeToOrder"
+          />
+        </div>
+
+        <div class="form-group full" *ngIf="isProduct">
+          <label class="checkbox-label">
+            <input
+              type="checkbox"
+              name="isMadeToOrder"
+              [(ngModel)]="form.isMadeToOrder"
+              (ngModelChange)="onMadeToOrderChange()"
+            />
+            Sobre pedido (se fabrica o encarga bajo demanda, sin stock)
+          </label>
+        </div>
+
+        <div class="form-group full">
+          <label class="checkbox-label">
+            <input
+              type="checkbox"
+              name="isAvailable"
+              [ngModel]="!form.isAvailable"
+              (ngModelChange)="onNotAvailableChange($event)"
+              [disabled]="isStockBased"
+            />
+            No disponible
+            <span *ngIf="isStockBased" class="checkbox-hint">
+              (se marca solo cuando el stock llega a 0)
+            </span>
+          </label>
         </div>
 
         <div class="form-group full">
@@ -37,7 +106,7 @@
 
         <div class="form-group full">
           <label for="description">Descripción</label>
-          <textarea id="description" name="description" [(ngModel)]="form.description" rows="3" placeholder="Detalles del producto..."></textarea>
+          <textarea id="description" name="description" [(ngModel)]="form.description" rows="3" placeholder="Detalles del producto o servicio..."></textarea>
         </div>
       </div>
 
@@ -85,7 +154,23 @@
       </div>
       <div class="product-info">
         <h3 class="product-name">{{ product.name }}</h3>
-        <p class="product-price">{{ product.price | currency: 'MXN' }}</p>
+        <div class="product-badges">
+          <span class="badge badge-type">{{ product.type === 'servicio' ? 'SERVICIO' : 'PRODUCTO' }}</span>
+          <span *ngIf="product.isMadeToOrder" class="badge badge-order">SOBRE PEDIDO</span>
+          <span *ngIf="!product.isAvailable" class="badge badge-unavailable">NO DISPONIBLE</span>
+          <span *ngIf="getCategoryName(product.categoryId) !== 'Sin categoría'" class="badge badge-category">
+            {{ getCategoryName(product.categoryId) }}
+          </span>
+        </div>
+        <p class="product-price" *ngIf="product.price !== null && product.price !== undefined">
+          {{ product.price | currency: 'MXN' }}
+        </p>
+        <p class="product-price product-price-none" *ngIf="product.price === null || product.price === undefined">
+          Cotizar
+        </p>
+        <p *ngIf="product.type === 'producto' && !product.isMadeToOrder" class="product-stock">
+          Stock: {{ product.stock }} pieza{{ product.stock === 1 ? '' : 's' }}
+        </p>
         <p class="product-location">📍 {{ product.location }}</p>
         <p *ngIf="product.description" class="product-description">{{ product.description }}</p>
         <div class="product-actions">

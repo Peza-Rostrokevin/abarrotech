@@ -1,19 +1,25 @@
 <nav class="navbar">
-  <a routerLink="/" class="brand">
-    <img src="/carrito blanco.png" alt="" class="brand-icon" />
-    AbarroTech
-  </a>
-  <div class="nav-links">
-    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Catálogo</a>
+  <div class="navbar-top">
+    <a routerLink="/" class="brand" (click)="closeMobileMenu()">
+      <img src="/carrito blanco.png" alt="" class="brand-icon" />
+      AbarroTech
+    </a>
+    <button class="hamburger" [class.open]="mobileMenuOpen" (click)="toggleMobileMenu()" aria-label="Menú">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+  <div class="nav-links" [class.open]="mobileMenuOpen">
+    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="closeMobileMenu()">Catálogo</a>
     <ng-container *ngIf="authService.currentUser() as user; else anon">
-      <a routerLink="/mis-productos" routerLinkActive="active">Mis Productos</a>
-      <a routerLink="/perfil" routerLinkActive="active">Mi Perfil</a>
-      <a *ngIf="authService.isAdmin()" routerLink="/admin" routerLinkActive="active">Administración</a>
+      <a routerLink="/mis-productos" routerLinkActive="active" (click)="closeMobileMenu()">Mis Productos</a>
+      <a routerLink="/mis-ventas" routerLinkActive="active" (click)="closeMobileMenu()">Mis Ventas</a>
+      <a routerLink="/perfil" routerLinkActive="active" (click)="closeMobileMenu()">Mi Perfil</a>
+      <a *ngIf="authService.isAdmin()" routerLink="/admin" routerLinkActive="active" (click)="closeMobileMenu()">Administración</a>
       <span class="user-chip">{{ user.name }}</span>
-      <button class="btn-logout" (click)="authService.logout()">Salir</button>
+      <button class="btn-logout" (click)="authService.logout(); closeMobileMenu()">Salir</button>
     </ng-container>
     <ng-template #anon>
-      <a routerLink="/login" routerLinkActive="active">Iniciar Sesión</a>
+      <a routerLink="/login" routerLinkActive="active" (click)="closeMobileMenu()">Iniciar Sesión</a>
     </ng-template>
   </div>
 </nav>
