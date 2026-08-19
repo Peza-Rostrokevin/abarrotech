@@ -112,7 +112,22 @@
 
       <div class="form-group full">
         <label for="image">Imagen del producto *</label>
-        <div class="file-upload">
+        <!-- Zona de imagen: haz clic o pulsa en ella para activarla.
+             Luego puedes pegar una imagen con Ctrl+V, o arrastrar y soltar
+             una imagen directamente sobre esta zona. -->
+        <div
+          class="file-upload image-dropzone"
+          [class.image-dropzone-active]="imageAreaActive"
+          [class.image-dropzone-dragging]="isDragging"
+          tabindex="0"
+          (click)="onImageAreaClick($event)"
+          (focus)="onImageAreaFocus(true)"
+          (blur)="onImageAreaFocus(false)"
+          (paste)="onPaste($event)"
+          (dragover)="onDragOver($event)"
+          (dragleave)="onDragLeave($event)"
+          (drop)="onDrop($event)"
+        >
           <input
             type="file"
             id="image"
@@ -128,6 +143,11 @@
             JPG, PNG, GIF o WebP — máx. 5 MB
           </span>
           <span class="file-hint" *ngIf="selectedFile">{{ selectedFile.name }}</span>
+          <!-- Instrucción: avisa que además de elegir archivo también se puede
+               pegar (Ctrl+V) o arrastrar la imagen hasta esta zona -->
+          <span class="file-hint file-hint-paste">
+            También puedes pegar una imagen con Ctrl+V o arrastrarla hasta aquí
+          </span>
         </div>
         <div class="image-preview" *ngIf="previewUrl">
           <img [src]="previewUrl" alt="Vista previa" />

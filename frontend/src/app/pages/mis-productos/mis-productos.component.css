@@ -181,6 +181,29 @@
   gap: 0.5rem;
 }
 
+/* Zona de imagen: resaltada cuando se pega (focus) o se arrastra una imagen */
+.image-dropzone {
+  border: 2px dashed transparent;
+  border-radius: 8px;
+  padding: 0.75rem;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.image-dropzone.image-dropzone-active {
+  border-color: #2563eb;
+  background: #f0f6ff;
+}
+
+.image-dropzone.image-dropzone-dragging {
+  border-color: #2563eb;
+  background: #dbeafe;
+}
+
+.file-hint-paste {
+  color: #2563eb;
+}
+
 .file-upload input[type='file'] {
   position: absolute;
   width: 1px;

@@ -38,6 +38,8 @@ export class MisProductosComponent {
   previewUrl = '';
   formError = '';
   saving = false;
+  isDragging = false;
+  imageAreaActive = false;
 
   constructor() {
     this.loadMyProducts();
@@ -149,9 +151,14 @@ export class MisProductosComponent {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
+    this.handleFile(file);
+  }
 
+  // Valida e incorpora la imagen que llega del input, del portapapeles (Ctrl+V)
+  // o de arrastrar y soltar (drag & drop)
+  private handleFile(file: File): void {
     if (!file.type.startsWith('image/')) {
-      this.formError = 'El archivo seleccionado no es una imagen';
+      this.formError = 'El archivo no es una imagen válida';
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
@@ -162,6 +169,58 @@ export class MisProductosComponent {
     this.formError = '';
     this.selectedFile = file;
     this.previewUrl = URL.createObjectURL(file);
+  }
+
+  // Al hacer clic fuera del input oculto se activa la zona para poder pegar
+  onImageAreaClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    if (target.tagName === 'INPUT' || target.tagName === 'LABEL') return;
+    (event.currentTarget as HTMLElement).focus();
+  }
+
+  // Marca visualmente si la zona de imagen tiene el foco
+  onImageAreaFocus(active: boolean): void {
+    this.imageAreaActive = active;
+  }
+
+  // Pega la imagen que tengas copiada con Ctrl+V cuando la zona está enfocada
+  onPaste(event: ClipboardEvent): void {
+    const items = event.clipboardData?.items;
+    if (!items) return;
+
+    for (const item of items) {
+      if (item.kind === 'file' && item.type.startsWith('image/')) {
+        const file = item.getAsFile();
+        if (file) {
+          event.preventDefault();
+          this.handleFile(file);
+        }
+        return;
+      }
+    }
+  }
+
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging = true;
+  }
+
+  onDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging = false;
+  }
+
+  // Suelta la imagen arrastrada sobre la zona
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging = false;
+
+    const file = event.dataTransfer?.files?.[0];
+    if (!file) return;
+    this.handleFile(file);
   }
 
   onSubmit(): void {
