@@ -126,7 +126,7 @@
         <div>
           <h3 class="customer-name">{{ customer.customerName }}</h3>
           <p class="customer-debt">
-            Debe: <strong>${{ customer.totalDebt.toFixed(2) }}</strong>
+            Debe: <strong>${{ safeNumber(customer.totalDebt).toFixed(2) }}</strong>
           </p>
         </div>
         <div class="pay-row">
@@ -146,15 +146,15 @@
         <div class="sale-block" *ngFor="let sale of customer.sales">
           <div class="sale-date">
             {{ sale.createdAt | date: 'medium' }}
-            <span class="sale-remaining">Saldo: ${{ sale.remaining.toFixed(2) }}</span>
+            <span class="sale-remaining">Saldo: ${{ safeNumber(sale.remaining).toFixed(2) }}</span>
             <button class="delete-debt-btn" (click)="onDeleteSale(sale._id, customer.customerName)">
               🗑 Eliminar deuda
             </button>
           </div>
           <div class="sale-items">
-            <div class="sale-item" *ngFor="let item of sale.items">
+            <div class="sale-item" *ngFor="let item of sale.items ?? []">
               <span>{{ item.quantity }} × {{ item.name }}</span>
-              <span>${{ (item.price * item.quantity).toFixed(2) }}</span>
+              <span>${{ safeNumber(item.price * item.quantity).toFixed(2) }}</span>
             </div>
           </div>
         </div>
@@ -184,19 +184,19 @@
       <div class="report-totals">
         <div class="total-card">
           <p class="total-label">Ventas</p>
-          <p class="total-value">{{ getReportTotals().count }}</p>
+          <p class="total-value">{{ reportTotals().count }}</p>
         </div>
         <div class="total-card">
           <p class="total-label">Ingresos (vendido)</p>
-          <p class="total-value">${{ getReportTotals().revenue.toFixed(2) }}</p>
+          <p class="total-value">${{ reportTotals().revenue.toFixed(2) }}</p>
         </div>
         <div class="total-card">
           <p class="total-label">Cobrado</p>
-          <p class="total-value">${{ getReportTotals().collected.toFixed(2) }}</p>
+          <p class="total-value">${{ reportTotals().collected.toFixed(2) }}</p>
         </div>
         <div class="total-card">
           <p class="total-label">Pendiente</p>
-          <p class="total-value">${{ getReportTotals().pending.toFixed(2) }}</p>
+          <p class="total-value">${{ reportTotals().pending.toFixed(2) }}</p>
         </div>
       </div>
 
@@ -218,7 +218,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let product of getReportProducts()">
+              <tr *ngFor="let product of reportProducts(); trackBy: trackProduct">
                 <td>{{ product.name }}</td>
                 <td>{{ product.quantity }}</td>
                 <td>${{ product.revenue.toFixed(2) }}</td>
@@ -229,6 +229,7 @@
                     step="0.01"
                     class="cost-input"
                     [(ngModel)]="costs[product.name]"
+                    (ngModelChange)="onCostChange()"
                     placeholder="0.00"
                   />
                 </td>
@@ -242,10 +243,10 @@
         </div>
 
         <div class="profit-summary">
-          <span>Ingresos: <strong>${{ getReportProfit().revenue.toFixed(2) }}</strong></span>
-          <span>Costos: <strong>${{ getReportProfit().cost.toFixed(2) }}</strong></span>
+          <span>Ingresos: <strong>${{ reportProfit().revenue.toFixed(2) }}</strong></span>
+          <span>Costos: <strong>${{ reportProfit().cost.toFixed(2) }}</strong></span>
           <span class="profit-total">
-            Ganancia real: <strong>${{ getReportProfit().profit.toFixed(2) }}</strong>
+            Ganancia real: <strong>${{ reportProfit().profit.toFixed(2) }}</strong>
           </span>
         </div>
       </div>

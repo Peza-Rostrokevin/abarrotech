@@ -56,6 +56,14 @@ export class MisVentasComponent {
   reportError = '';
   costs: Record<string, number> = {};
 
+  // Reporte precaculado: se calcula una sola vez al llegar los datos.
+  // Usar señales en lugar de funciones en el template evita que Angular
+  // recalcule y re-renderice la tabla en cada ciclo de detección de cambios
+  // (causa del freeze/pantalla blanca)
+  readonly reportProducts = signal<ReportProductSummary[]>([]);
+  readonly reportTotals = signal({ count: 0, revenue: 0, collected: 0, pending: 0 });
+  readonly reportProfit = signal({ revenue: 0, cost: 0, profit: 0 });
+
   constructor() {
     this.loadProducts();
     this.loadPending();
@@ -275,6 +283,9 @@ export class MisVentasComponent {
     this.saleService.getMySales({ from: this.reportFrom, to: this.reportTo }).subscribe({
       next: (sales) => {
         this.reportSales.set(sales);
+        this.reportProducts.set(this.buildReportProducts(sales));
+        this.reportTotals.set(this.buildReportTotals(sales));
+        this.reportProfit.set(this.buildReportProfit(this.reportProducts()));
         this.reportLoading = false;
       },
       error: () => {
@@ -284,29 +295,31 @@ export class MisVentasComponent {
     });
   }
 
-  getReportTotals(): { count: number; revenue: number; collected: number; pending: number } {
-    const sales = this.reportSales();
+  private buildReportTotals(sales: Sale[]): { count: number; revenue: number; collected: number; pending: number } {
     return {
       count: sales.length,
-      revenue: sales.reduce((sum, s) => sum + s.total, 0),
-      collected: sales.reduce((sum, s) => sum + s.paid, 0),
-      pending: sales.reduce((sum, s) => sum + (s.total - s.paid), 0)
+      revenue: sales.reduce((sum, s) => sum + (s.total ?? 0), 0),
+      collected: sales.reduce((sum, s) => sum + (s.paid ?? 0), 0),
+      pending: sales.reduce((sum, s) => sum + ((s.total ?? 0) - (s.paid ?? 0)), 0)
     };
   }
 
-  getReportProducts(): ReportProductSummary[] {
+  private buildReportProducts(sales: Sale[]): ReportProductSummary[] {
     const map = new Map<string, ReportProductSummary>();
-    for (const sale of this.reportSales()) {
-      for (const item of sale.items) {
+    for (const sale of sales) {
+      // Defensivo: ventas sin items (datos viejos o corruptos) no deben romper el reporte
+      for (const item of sale.items ?? []) {
+        const quantity = Number(item.quantity) || 0;
+        const revenue = (Number(item.price) || 0) * quantity;
         const existing = map.get(item.name);
         if (existing) {
-          existing.quantity += item.quantity;
-          existing.revenue += item.price * item.quantity;
+          existing.quantity += quantity;
+          existing.revenue += revenue;
         } else {
           map.set(item.name, {
             name: item.name,
-            quantity: item.quantity,
-            revenue: item.price * item.quantity,
+            quantity,
+            revenue,
             cost: 0
           });
         }
@@ -315,10 +328,26 @@ export class MisVentasComponent {
     return Array.from(map.values()).sort((a, b) => b.revenue - a.revenue);
   }
 
-  getReportProfit(): { revenue: number; cost: number; profit: number } {
-    const products = this.getReportProducts();
+  private buildReportProfit(products: ReportProductSummary[]): { revenue: number; cost: number; profit: number } {
     const revenue = products.reduce((sum, p) => sum + p.revenue, 0);
     const cost = products.reduce((sum, p) => sum + (this.costs[p.name] ?? 0) * p.quantity, 0);
     return { revenue, cost, profit: revenue - cost };
+  }
+
+  // Defensivo: evita que un error de render deje la pantalla en blanco
+  safeNumber(value: unknown): number {
+    const n = Number(value);
+    return isNaN(n) ? 0 : n;
+  }
+
+  // trackBy para que Angular no destruya/reconstruya las filas de la tabla
+  // cuando cambia el reporte (evita re-renders costosos)
+  trackProduct(_: number, product: ReportProductSummary): string {
+    return product.name;
+  }
+
+  // Al cambiar un costo se recalcula la ganancia (solo se actualizan las señales)
+  onCostChange(): void {
+    this.reportProfit.set(this.buildReportProfit(this.reportProducts()));
   }
 }

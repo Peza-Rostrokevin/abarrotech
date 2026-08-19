@@ -17,16 +17,33 @@ export class SaleService {
     const query = new URLSearchParams();
     // Convierte "yyyy-MM-dd" a instante ISO (medianoche hora local del usuario)
     // para que el rango abarque el día completo sin desfase de zona horaria
-    if (params?.from) query.set('from', this.toUtcInstant(params.from));
-    if (params?.to) query.set('to', this.toUtcInstant(params.to));
+    const from = this.toUtcInstant(params?.from);
+    const to = this.toUtcInstant(params?.to);
+    // Solo envía las fechas si son válidas; si no, el backend devuelve todo
+    if (from) query.set('from', from);
+    if (to) query.set('to', to);
     if (params?.status) query.set('status', params.status);
     const qs = query.toString();
     return this.http.get<Sale[]>(`${this.apiUrl}/sales${qs ? `?${qs}` : ''}`);
   }
 
-  private toUtcInstant(date: string): string {
-    const [y, m, d] = date.split('-').map(Number);
-    return new Date(y, m - 1, d).toISOString();
+  // Convierte "yyyy-MM-dd" a instante ISO UTC. Devuelve '' si la fecha
+  // no es válida para nunca lanzar RangeError y romper el componente
+  private toUtcInstant(date?: string): string {
+    if (!date) return '';
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+    if (!match) return '';
+    const [, y, m, d] = match.map(Number);
+    const parsed = new Date(y, m - 1, d);
+    if (
+      isNaN(parsed.getTime()) ||
+      parsed.getFullYear() !== y ||
+      parsed.getMonth() !== m - 1 ||
+      parsed.getDate() !== d
+    ) {
+      return '';
+    }
+    return parsed.toISOString();
   }
 
   getPendingCustomers(): Observable<PendingCustomer[]> {
