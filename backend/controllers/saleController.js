@@ -90,14 +90,20 @@ const getMySales = async (req, res) => {
     const filter = { sellerId: req.user._id };
 
     if (from || to) {
-      filter.createdAt = {};
-      if (from) {
-        const fromDate = parseDate(from);
-        if (fromDate) filter.createdAt.$gte = fromDate;
+      const fromDate = from ? parseDate(from) : null;
+      const toDate = to ? parseDate(to) : null;
+
+      if ((from && !fromDate) || (to && !toDate)) {
+        return res.status(400).json({ message: 'Las fechas del reporte no son válidas' });
       }
-      if (to) {
-        const toEnd = parseDate(to);
-        if (toEnd) {
+
+      // Solo agrega createdAt al filtro si hay al menos una fecha válida,
+      // para nunca enviarle a Mongoose un valor no parseable
+      if (fromDate || toDate) {
+        filter.createdAt = {};
+        if (fromDate) filter.createdAt.$gte = fromDate;
+        if (toDate) {
+          const toEnd = new Date(toDate.getTime());
           // +1 día en UTC porque "to" ya viene como medianoche local del usuario
           toEnd.setUTCDate(toEnd.getUTCDate() + 1);
           filter.createdAt.$lt = toEnd;
