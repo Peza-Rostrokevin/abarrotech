@@ -1,6 +1,31 @@
 const Sale = require('../models/Sale');
 const Product = require('../models/Product');
 
+// Normaliza un nombre para comparación: minúsculas, sin acentos, sin espacios extra
+const normalizeName = (name) => {
+  return (name || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
+// Minúsculas sin espacios extra (se guarda así en la base de datos)
+const toLowerCaseName = (name) => {
+  return (name || '').replace(/\s+/g, ' ').trim().toLowerCase();
+};
+
+// Primera letra de cada palabra en mayúscula (para mostrar)
+const toTitleCase = (name) => {
+  return (name || '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .split(' ')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
 const createSale = async (req, res) => {
   try {
     const { items, paymentMethod, customerName } = req.body;
@@ -57,7 +82,8 @@ const createSale = async (req, res) => {
       items: saleItems,
       total,
       paymentMethod: method,
-      customerName: method === 'pendiente' ? (customerName || '').trim() : '',
+      // Se guarda en minúsculas para que todos los clientes se comparen igual
+      customerName: method === 'pendiente' ? toLowerCaseName(customerName) : '',
       paid,
       payments: paid > 0 ? [{ amount: paid }] : []
     });
@@ -132,10 +158,10 @@ const getPendingCustomers = async (req, res) => {
     const byCustomer = new Map();
 
     for (const sale of sales) {
-      const key = (sale.customerName || '').toLowerCase();
+      const key = normalizeName(sale.customerName);
       if (!byCustomer.has(key)) {
         byCustomer.set(key, {
-          customerName: sale.customerName,
+          customerName: toTitleCase(sale.customerName),
           totalDebt: 0,
           sales: []
         });
@@ -169,7 +195,7 @@ const payCustomer = async (req, res) => {
   try {
     const { customerName, amount } = req.body;
 
-    const name = (customerName || '').trim();
+    const name = normalizeName(customerName);
     if (!name) {
       return res.status(400).json({ message: 'El nombre del cliente es obligatorio' });
     }
@@ -187,7 +213,7 @@ const payCustomer = async (req, res) => {
       .select('+payments');
 
     const salesOfCustomer = pending.filter(
-      (s) => (s.customerName || '').toLowerCase() === name.toLowerCase()
+      (s) => normalizeName(s.customerName) === name
     );
 
     if (salesOfCustomer.length === 0) {
@@ -213,7 +239,7 @@ const payCustomer = async (req, res) => {
       remainingToApply -= toApply;
     }
 
-    res.json({ message: `Abono de $${payment.toFixed(2)} aplicado a "${name}"` });
+    res.json({ message: `Abono de $${payment.toFixed(2)} aplicado a "${toTitleCase(name)}"` });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error al registrar el abono', error: error.message });
