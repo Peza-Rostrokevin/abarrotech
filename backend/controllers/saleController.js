@@ -77,9 +77,11 @@ const createSale = async (req, res) => {
   }
 };
 
-const parseLocalDate = (s) => {
-  const [y, m, d] = s.split('-').map(Number);
-  return new Date(y, m - 1, d);
+// Convierte la fecha recibida (ISO UTC de medianoche local del usuario)
+// a un Date real respetando el instante
+const parseDate = (s) => {
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? null : d;
 };
 
 const getMySales = async (req, res) => {
@@ -89,11 +91,17 @@ const getMySales = async (req, res) => {
 
     if (from || to) {
       filter.createdAt = {};
-      if (from) filter.createdAt.$gte = parseLocalDate(from);
+      if (from) {
+        const fromDate = parseDate(from);
+        if (fromDate) filter.createdAt.$gte = fromDate;
+      }
       if (to) {
-        const toEnd = parseLocalDate(to);
-        toEnd.setDate(toEnd.getDate() + 1);
-        filter.createdAt.$lt = toEnd;
+        const toEnd = parseDate(to);
+        if (toEnd) {
+          // +1 día en UTC porque "to" ya viene como medianoche local del usuario
+          toEnd.setUTCDate(toEnd.getUTCDate() + 1);
+          filter.createdAt.$lt = toEnd;
+        }
       }
     }
     if (status && ['pagado', 'pendiente', 'parcial'].includes(status)) {

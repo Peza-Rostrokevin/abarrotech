@@ -89,6 +89,15 @@ export class MisVentasComponent {
 
   setTab(tab: 'vender' | 'pendientes' | 'reportes'): void {
     this.tab.set(tab);
+    // Al entrar a Reportes, si aún no hay fechas, muestra automáticamente
+    // las ventas del día actual
+    if (tab === 'reportes' && !this.reportFrom && !this.reportTo) {
+      const today = new Date();
+      const fmt = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      this.reportFrom = fmt;
+      this.reportTo = fmt;
+      this.onLoadReport();
+    }
   }
 
   getCartTotal(): number {
@@ -130,13 +139,13 @@ export class MisVentasComponent {
 
   changeQuantity(item: CartItem, delta: number): void {
     const next = item.quantity + delta;
-    if (next < 1) return;
+    if (next < 1) {
+      // Al llegar a 0 el producto se elimina del carrito
+      this.cart = this.cart.filter((x) => x.productId !== item.productId);
+      return;
+    }
     if (item.maxStock !== null && next > item.maxStock) return;
     item.quantity = next;
-  }
-
-  removeFromCart(item: CartItem): void {
-    this.cart = this.cart.filter((x) => x.productId !== item.productId);
   }
 
   clearCart(): void {
