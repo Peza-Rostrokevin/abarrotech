@@ -50,6 +50,8 @@ export class MisProductosComponent {
   saving = false;
   isDragging = false;
   imageAreaActive = false;
+  variantImageActive = -1;
+  variantDragging = -1;
 
   constructor() {
     this.loadMyProducts();
@@ -262,6 +264,11 @@ export class MisProductosComponent {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
+    this.handleVariantFile(file, index);
+  }
+
+  // Valida e incorpora la imagen de la variante (input, Ctrl+V o arrastrar)
+  private handleVariantFile(file: File, index: number): void {
     const row = this.variantRows[index];
     if (!row) return;
 
@@ -274,8 +281,56 @@ export class MisProductosComponent {
       return;
     }
 
+    this.formError = '';
     row.imageFile = file;
     row.imageUrl = URL.createObjectURL(file);
+  }
+
+  // Al hacer clic fuera del input oculto se activa la zona para poder pegar
+  onVariantImageClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    if (target.tagName === 'INPUT' || target.tagName === 'LABEL' || target.tagName === 'IMG') return;
+    (event.currentTarget as HTMLElement).focus();
+  }
+
+  // Pega la imagen con Ctrl+V cuando la zona de la variante está enfocada
+  onVariantPaste(event: ClipboardEvent, index: number): void {
+    const items = event.clipboardData?.items;
+    if (!items) return;
+
+    for (const item of items) {
+      if (item.kind === 'file' && item.type.startsWith('image/')) {
+        const file = item.getAsFile();
+        if (file) {
+          event.preventDefault();
+          this.handleVariantFile(file, index);
+        }
+        return;
+      }
+    }
+  }
+
+  onVariantDragOver(event: DragEvent, index: number): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.variantDragging = index;
+  }
+
+  onVariantDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.variantDragging = -1;
+  }
+
+  // Suelta la imagen arrastrada sobre la zona de la variante
+  onVariantDrop(event: DragEvent, index: number): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.variantDragging = -1;
+
+    const file = event.dataTransfer?.files?.[0];
+    if (!file) return;
+    this.handleVariantFile(file, index);
   }
 
   private buildVariantsPayload(): ProductVariantPayload[] {

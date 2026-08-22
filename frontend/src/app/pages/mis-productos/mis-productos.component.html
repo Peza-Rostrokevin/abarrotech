@@ -115,8 +115,9 @@
         <div *ngIf="hasVariants" class="form-group full variants-section">
           <h3 class="variants-title">Variantes</h3>
           <p class="checkbox-hint">
-            Si dejas el precio vacío heredará el precio del producto.
+            Si dejas el precio vacío heredará el precio del producto ({{ form.price ? '$' + form.price : 'precio base' }}).
             Si dejas la imagen vacía se usará la imagen del producto.
+            Las imágenes también se pueden pegar con Ctrl+V o arrastrar.
           </p>
 
           <div class="variant-row" *ngFor="let row of variantRows; let i = index">
@@ -135,7 +136,7 @@
                 [name]="'variantPrice' + i"
                 min="0"
                 step="0.01"
-                [placeholder]="'Precio (vacío = ' + (form.price || '?') + ')'"
+                [placeholder]="'Vacío = ' + (form.price ? '$' + form.price : 'precio base')"
               />
               <input
                 type="number"
@@ -147,7 +148,21 @@
                 placeholder="Stock"
               />
             </div>
-            <div class="variant-image">
+            <!-- Zona de imagen de la variante: haz clic o pulsa en ella para activarla.
+                 También puedes pegar una imagen con Ctrl+V o arrastrarla hasta aquí -->
+            <div
+              class="variant-image variant-dropzone"
+              [class.image-dropzone-active]="variantImageActive === i"
+              [class.image-dropzone-dragging]="variantDragging === i"
+              tabindex="0"
+              (click)="onVariantImageClick($event)"
+              (focus)="variantImageActive = i"
+              (blur)="variantImageActive = -1"
+              (paste)="onVariantPaste($event, i)"
+              (dragover)="onVariantDragOver($event, i)"
+              (dragleave)="onVariantDragLeave($event)"
+              (drop)="onVariantDrop($event, i)"
+            >
               <input
                 type="file"
                 [id]="'variantImage' + i"
@@ -158,6 +173,14 @@
                 {{ row.imageUrl ? 'Cambiar imagen' : 'Subir imagen' }}
               </label>
               <img *ngIf="row.imageUrl" [src]="row.imageUrl" class="variant-thumb" alt="Vista previa" />
+            </div>
+            <div class="variant-hints">
+              <span class="checkbox-hint" *ngIf="!row.imageUrl">
+                ℹ️ Sin imagen propia → se mostrará la imagen del producto
+              </span>
+              <span class="checkbox-hint" *ngIf="row.imageUrl">📷 Imagen propia</span>
+              <span class="checkbox-hint" *ngIf="!row.price">ℹ️ Sin precio → se mostrará ${{ form.price || 'a definir' }}</span>
+              <span class="checkbox-hint" *ngIf="row.price">💰 Precio propio</span>
             </div>
             <button type="button" class="variant-remove-btn" (click)="removeVariantRow(i)">✕</button>
           </div>

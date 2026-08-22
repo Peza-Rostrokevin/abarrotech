@@ -213,6 +213,33 @@
   gap: 0.5rem;
 }
 
+/* Zona de imagen de la variante: resaltada cuando se pega o arrastra */
+.variant-dropzone {
+  border: 2px dashed transparent;
+  border-radius: 8px;
+  padding: 0.35rem;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.variant-dropzone.image-dropzone-active {
+  border-color: #2563eb;
+  background: #f0f6ff;
+}
+
+.variant-dropzone.image-dropzone-dragging {
+  border-color: #2563eb;
+  background: #dbeafe;
+}
+
+.variant-hints {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  flex: 1 1 100%;
+  padding-left: 0.35rem;
+}
+
 .variant-image input[type='file'] {
   position: absolute;
   width: 1px;
