@@ -122,31 +122,43 @@
 
           <div class="variant-row" *ngFor="let row of variantRows; let i = index">
             <div class="variant-fields">
-              <input
-                type="text"
-                class="variant-name-input"
-                [(ngModel)]="row.name"
-                [name]="'variantName' + i"
-                placeholder="Nombre (ej. Naranja, Verde-Grande)"
-              />
-              <input
-                type="number"
-                class="variant-price-input"
-                [(ngModel)]="row.price"
-                [name]="'variantPrice' + i"
-                min="0"
-                step="0.01"
-                [placeholder]="'Vacío = ' + (form.price ? '$' + form.price : 'precio base')"
-              />
-              <input
-                type="number"
-                class="variant-stock-input"
-                [(ngModel)]="row.stock"
-                [name]="'variantStock' + i"
-                min="0"
-                step="1"
-                placeholder="Stock"
-              />
+              <div class="variant-field">
+                <label class="variant-field-label" [for]="'variantName' + i">Variante</label>
+                <input
+                  type="text"
+                  [id]="'variantName' + i"
+                  class="variant-name-input"
+                  [(ngModel)]="row.name"
+                  [name]="'variantName' + i"
+                  placeholder="Ej. Naranja, Verde-Grande"
+                />
+              </div>
+              <div class="variant-field">
+                <label class="variant-field-label" [for]="'variantPrice' + i">Precio (MXN)</label>
+                <input
+                  type="number"
+                  [id]="'variantPrice' + i"
+                  class="variant-price-input"
+                  [(ngModel)]="row.price"
+                  [name]="'variantPrice' + i"
+                  min="0"
+                  step="0.01"
+                  [placeholder]="'Vacío = ' + (form.price ? '$' + form.price : 'precio base')"
+                />
+              </div>
+              <div class="variant-field">
+                <label class="variant-field-label" [for]="'variantStock' + i">Stock (piezas)</label>
+                <input
+                  type="number"
+                  [id]="'variantStock' + i"
+                  class="variant-stock-input"
+                  [(ngModel)]="row.stock"
+                  [name]="'variantStock' + i"
+                  min="0"
+                  step="1"
+                  placeholder="0"
+                />
+              </div>
             </div>
             <!-- Zona de imagen de la variante: haz clic o pulsa en ella para activarla.
                  También puedes pegar una imagen con Ctrl+V o arrastrarla hasta aquí -->
