@@ -35,6 +35,10 @@ const productSchema = new mongoose.Schema(
       default: 0,
       min: [0, 'Los likes no pueden ser negativos']
     },
+    isHidden: {
+      type: Boolean,
+      default: false
+    },
     categoryId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Category',

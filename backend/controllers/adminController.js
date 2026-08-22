@@ -35,7 +35,7 @@ const getAllProducts = async (req, res) => {
     const filter = {};
     if (sellerId) filter.sellerId = sellerId;
 
-    const products = await Product.find(filter).sort({ createdAt: -1 }).populate('sellerId', 'name email location');
+    const products = await Product.find({ ...filter, isHidden: { $ne: true } }).sort({ createdAt: -1 }).populate('sellerId', 'name email location');
     res.json(products);
   } catch (error) {
     console.error(error);

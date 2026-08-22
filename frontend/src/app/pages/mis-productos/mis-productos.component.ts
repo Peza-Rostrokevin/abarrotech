@@ -54,6 +54,11 @@ export class MisProductosComponent {
   imageAreaActive = false;
   variantImageActive = -1;
   variantDragging = -1;
+  importModalOpen = false;
+  importSelected = new Set<string>();
+  importingVariants = false;
+  importError = '';
+  importSuccess = '';
 
   constructor() {
     const me = this.authService.currentUser();
@@ -184,6 +189,69 @@ export class MisProductosComponent {
     this.showForm.set(false);
     this.editingId.set(null);
     this.resetForm();
+  }
+
+  // Lista de productos candidatos para convertirse en variantes:
+  // excluye el producto en edición y los que ya están ocultos
+  get importableProducts(): Product[] {
+    const currentId = this.editingId();
+    return this.products().filter((p) => p._id !== currentId);
+  }
+
+  openImportModal(): void {
+    this.importSelected.clear();
+    this.importError = '';
+    this.importSuccess = '';
+    this.importModalOpen = true;
+  }
+
+  closeImportModal(): void {
+    this.importModalOpen = false;
+  }
+
+  isImportSelected(id: string): boolean {
+    return this.importSelected.has(id);
+  }
+
+  toggleImportProduct(id: string, checked: boolean): void {
+    if (checked) {
+      this.importSelected.add(id);
+    } else {
+      this.importSelected.delete(id);
+    }
+    this.importError = '';
+  }
+
+  onImportVariants(): void {
+    const parentId = this.editingId();
+    if (!parentId) return;
+    if (this.importSelected.size === 0) {
+      this.importError = 'Selecciona al menos un producto';
+      return;
+    }
+
+    this.importingVariants = true;
+    this.importError = '';
+    this.importSuccess = '';
+
+    this.productService.importVariants(parentId, Array.from(this.importSelected)).subscribe({
+      next: (res) => {
+        this.importingVariants = false;
+        const skippedMsg = res.skipped > 0 ? ` (${res.skipped} omitidos)` : '';
+        this.importSuccess = `${res.imported} producto${res.imported === 1 ? '' : 's'} importado${res.imported === 1 ? '' : 's'} como variante${res.imported === 1 ? '' : 's'}${skippedMsg}`;
+        this.closeImportModal();
+        this.importSelected.clear();
+        this.loadMyProducts();
+        const updated = this.products().find((p) => p._id === parentId);
+        if (updated) {
+          this.openEditForm(updated);
+        }
+      },
+      error: (err) => {
+        this.importingVariants = false;
+        this.importError = err.error?.message ?? 'Error al importar productos';
+      }
+    });
   }
 
   onFileSelected(event: Event): void {

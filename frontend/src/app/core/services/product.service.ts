@@ -58,6 +58,16 @@ export class ProductService {
     return this.http.post<{ likes: number }>(`${this.apiUrl}/products/${id}/like`, { action });
   }
 
+  importVariants(
+    parentId: string,
+    productIds: string[]
+  ): Observable<{ product: Product; imported: number; skipped: number; errors: string[] }> {
+    return this.http.post<{ product: Product; imported: number; skipped: number; errors: string[] }>(
+      `${this.apiUrl}/products/${parentId}/import-variants`,
+      { productIds }
+    );
+  }
+
   private hasVariantFiles(payload: Partial<ProductPayload>): boolean {
     return (payload.variants ?? []).some((v) => !!v.imageFile);
   }

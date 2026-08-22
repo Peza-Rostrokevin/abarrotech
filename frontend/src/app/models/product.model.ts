@@ -23,6 +23,7 @@ export interface Product {
   stock: number;
   isAvailable: boolean;
   isMadeToOrder: boolean;
+  isHidden?: boolean;
   likes: number;
   categoryId: string | null | { _id: string; name: string };
   imageUrl: string;

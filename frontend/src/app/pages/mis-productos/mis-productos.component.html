@@ -201,6 +201,16 @@
           <button type="button" class="btn-secondary add-variant-btn" (click)="addVariantRow()">
             + Agregar otra variante
           </button>
+
+          <!-- Solo en modo edición: convierte productos ya publicados en variantes -->
+          <button
+            type="button"
+            class="btn-import-variants"
+            *ngIf="editingId()"
+            (click)="openImportModal()"
+          >
+            📥 Convertir mis productos en variantes
+          </button>
         </div>
 
         <div class="form-group full">
@@ -300,6 +310,62 @@
           <button class="btn-delete" (click)="onDelete(product)">Eliminar</button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Modal: importar productos como variantes -->
+  <div class="import-overlay" *ngIf="importModalOpen" (click)="closeImportModal()">
+    <div class="import-modal" (click)="$event.stopPropagation()">
+      <header class="import-header">
+        <h3>Convertir productos en variantes</h3>
+        <p class="checkbox-hint">
+          Los productos seleccionados se agregarán como variantes de "{{ form.name }}"
+          y quedarán ocultos del catálogo (sus ventas pasadas se conservan).
+        </p>
+        <button type="button" class="import-close" (click)="closeImportModal()" aria-label="Cerrar">✕</button>
+      </header>
+
+      <div class="import-body">
+        <div *ngIf="importableProducts.length === 0" class="center-message">
+          No tienes otros productos para importar.
+        </div>
+
+        <label
+          class="import-item"
+          *ngFor="let p of importableProducts"
+          [class.selected]="isImportSelected(p._id)"
+        >
+          <img *ngIf="p.imageUrl" [src]="p.imageUrl" [alt]="p.name" class="import-thumb" loading="lazy" />
+          <div *ngIf="!p.imageUrl" class="import-thumb import-thumb-empty">Sin img</div>
+          <div class="import-info">
+            <span class="import-name">{{ p.name }}</span>
+            <span class="import-meta">
+              {{ p.type === 'servicio' ? 'Servicio' : (p.price !== null && p.price !== undefined ? '$' + p.price : 'Cotizar') }}
+              <span *ngIf="p.type === 'producto' && !p.isMadeToOrder && !hasVariantsOf(p)"> · Stock: {{ p.stock }}</span>
+            </span>
+          </div>
+          <input
+            type="checkbox"
+            class="import-checkbox"
+            [checked]="isImportSelected(p._id)"
+            (change)="toggleImportProduct(p._id, $event.target.checked)"
+          />
+        </label>
+      </div>
+
+      <footer class="import-footer">
+        <div *ngIf="importError" class="error-box">{{ importError }}</div>
+        <div *ngIf="importSuccess" class="success-box">{{ importSuccess }}</div>
+        <button type="button" class="btn-secondary" (click)="closeImportModal()">Cancelar</button>
+        <button
+          type="button"
+          class="btn-primary"
+          [disabled]="importingVariants || importSelected.size === 0"
+          (click)="onImportVariants()"
+        >
+          {{ importingVariants ? 'Importando...' : 'Importar seleccionados (' + importSelected.size + ')' }}
+        </button>
+      </footer>
     </div>
   </div>
 </div>

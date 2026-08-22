@@ -71,7 +71,7 @@ const uploadVariantImages = async (req, variants) => {
 const getAllProducts = async (req, res) => {
   try {
     const { q, categoryId, sellerId, sortBy, order } = req.query;
-    const filter = {};
+    const filter = { isHidden: { $ne: true } };
 
     if (q) {
       filter.$or = [
@@ -108,7 +108,7 @@ const getAllProducts = async (req, res) => {
 
 const getMyProducts = async (req, res) => {
   try {
-    const products = await Product.find({ sellerId: req.user._id }).sort({ createdAt: -1 });
+    const products = await Product.find({ sellerId: req.user._id, isHidden: { $ne: true } }).sort({ createdAt: -1 });
     res.json(products);
   } catch (error) {
     console.error(error);
@@ -291,8 +291,7 @@ const deleteProduct = async (req, res) => {
   }
 };
 
-const toggleLikeProduct = async (req, res) => {
-  try {
+const toggleLikeProduct = async (req, res) => {  try {
     const product = await Product.findById(req.params.id);
     if (!product) {
       return res.status(404).json({ message: 'Producto no encontrado' });
@@ -314,6 +313,80 @@ const toggleLikeProduct = async (req, res) => {
   }
 };
 
+const importVariants = async (req, res) => {
+  try {
+    const parent = await Product.findById(req.params.id);
+    if (!parent) {
+      return res.status(404).json({ message: 'Producto no encontrado' });
+    }
+
+    const isOwner = parent.sellerId.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === 'admin';
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({ message: 'Solo puedes modificar tus propios productos' });
+    }
+
+    const { productIds } = req.body;
+    if (!Array.isArray(productIds) || productIds.length === 0) {
+      return res.status(400).json({ message: 'Selecciona al menos un producto' });
+    }
+
+    const sources = await Product.find({
+      _id: { $in: productIds },
+      sellerId: req.user._id,
+      isHidden: { $ne: true }
+    });
+
+    if (sources.length !== productIds.length) {
+      return res.status(400).json({
+        message: 'Algunos productos no existen, no son tuyos o ya están ocultos'
+      });
+    }
+
+    const existingNames = new Set((parent.variants ?? []).map((v) => v.name.trim().toLowerCase()));
+    const newVariants = [];
+    const errors = [];
+
+    for (const source of sources) {
+      if (source._id.toString() === parent._id.toString()) continue;
+      const variantName = source.name.trim();
+      if (existingNames.has(variantName.toLowerCase())) {
+        errors.push(`Ya existe la variante "${variantName}"`);
+        continue;
+      }
+      newVariants.push({
+        name: variantName,
+        price: source.price ?? null,
+        stock: source.type === 'servicio' ? 0 : source.stock ?? 0,
+        imageUrl: source.imageUrl || ''
+      });
+      existingNames.add(variantName.toLowerCase());
+    }
+
+    if (newVariants.length === 0) {
+      return res.status(400).json({ message: errors.join(' ') || 'No se pudieron importar productos' });
+    }
+
+    parent.variants = [...(parent.variants ?? []), ...newVariants];
+    await parent.save();
+
+    await Product.updateMany(
+      { _id: { $in: sources.map((s) => s._id) } },
+      { $set: { isHidden: true, isAvailable: false } }
+    );
+
+    res.json({
+      product: parent,
+      imported: newVariants.length,
+      skipped: sources.length - newVariants.length,
+      errors
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al importar productos como variantes', error: error.message });
+  }
+};
+
 module.exports = {
   getAllProducts,
   getMyProducts,
@@ -321,5 +394,6 @@ module.exports = {
   createProduct,
   updateProduct,
   deleteProduct,
-  toggleLikeProduct
+  toggleLikeProduct,
+  importVariants
 };

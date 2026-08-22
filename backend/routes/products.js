@@ -7,7 +7,8 @@ const {
   createProduct,
   updateProduct,
   deleteProduct,
-  toggleLikeProduct
+  toggleLikeProduct,
+  importVariants
 } = require('../controllers/productController');
 const { protect } = require('../middleware/auth');
 const { upload } = require('../config/upload');
@@ -15,6 +16,7 @@ const { upload } = require('../config/upload');
 router.get('/', getAllProducts);
 router.get('/mine', protect, getMyProducts);
 router.get('/:id', getProductById);
+router.post('/:id/import-variants', protect, importVariants);
 router.post('/:id/like', toggleLikeProduct);
 router.post('/', protect, upload.fields([{ name: 'image', maxCount: 1 }, { name: 'variantImages', maxCount: 20 }]), createProduct);
 router.put('/:id', protect, upload.fields([{ name: 'image', maxCount: 1 }, { name: 'variantImages', maxCount: 20 }]), updateProduct);
