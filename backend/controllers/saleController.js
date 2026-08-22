@@ -56,12 +56,30 @@ const createSale = async (req, res) => {
       }
 
       const quantity = Math.max(1, Number(item.quantity) || 1);
-      const price = Number(item.price) || product.price || 0;
+
+      // Con variantes: buscar la variante y usar su precio/stock
+      let variant = null;
+      if (product.variants && product.variants.length > 0) {
+        const wanted = (item.variantName || '').trim();
+        variant = product.variants.find(
+          (v) => (v.name || '').toLowerCase() === wanted.toLowerCase()
+        );
+        if (!variant) {
+          return res.status(400).json({
+            message: `Debes elegir una variante válida de "${product.name}"`
+          });
+        }
+      }
+
+      const price = Number(item.price) || (variant?.price ?? product.price) || 0;
 
       if (product.type === 'producto' && !product.isMadeToOrder) {
-        if (product.stock < quantity) {
+        const availableStock = variant ? variant.stock : product.stock;
+        if (availableStock < quantity) {
           return res.status(400).json({
-            message: `Stock insuficiente de "${product.name}": solo hay ${product.stock}`
+            message: variant
+              ? `Stock insuficiente de "${product.name} (${variant.name})": solo hay ${availableStock}`
+              : `Stock insuficiente de "${product.name}": solo hay ${availableStock}`
           });
         }
       }
@@ -69,9 +87,10 @@ const createSale = async (req, res) => {
       total += price * quantity;
       saleItems.push({
         productId: product._id,
-        name: product.name,
+        name: variant ? `${product.name} - ${variant.name}` : product.name,
         price,
-        quantity
+        quantity,
+        variantName: variant ? variant.name : null
       });
     }
 
@@ -91,7 +110,21 @@ const createSale = async (req, res) => {
     for (const item of saleItems) {
       const product = await Product.findById(item.productId);
       if (product.type === 'producto' && !product.isMadeToOrder) {
-        product.stock = Math.max(0, product.stock - item.quantity);
+        if (item.variantName) {
+          // Decrementa el stock de la variante específica (re-buscar por nombre,
+          // porque la referencia del item apunta al documento anterior)
+          const variant = product.variants.find(
+            (v) => (v.name || '').toLowerCase() === item.variantName.toLowerCase()
+          );
+          if (variant) {
+            variant.stock = Math.max(0, variant.stock - item.quantity);
+          }
+          // Disponibilidad: al menos una variante con stock
+          product.isAvailable = product.variants.some((v) => v.stock > 0);
+        } else {
+          product.stock = Math.max(0, product.stock - item.quantity);
+          product.isAvailable = product.stock > 0;
+        }
         await product.save();
       }
     }

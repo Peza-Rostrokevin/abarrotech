@@ -12,6 +12,7 @@ interface CartItem {
   price: number;
   quantity: number;
   maxStock: number | null;
+  variantName: string | null;
 }
 
 interface ReportProductSummary {
@@ -42,6 +43,10 @@ export class MisVentasComponent {
   saleMessage = '';
   saleError = '';
   selling = false;
+
+  // Modal de selección de variante
+  variantModalProduct: Product | null = null;
+  selectedVariantIndex = 0;
 
   readonly pendingCustomers = signal<PendingCustomer[]>([]);
   pendingLoading = true;
@@ -113,9 +118,29 @@ export class MisVentasComponent {
   }
 
   addToCart(product: Product): void {
-    let price = product.price ?? 0;
+    const hasVariants = (product.variants ?? []).length > 0;
+    if (hasVariants) {
+      // Abre el modal para elegir la variante
+      this.variantModalProduct = product;
+      this.selectedVariantIndex = product.variants.findIndex((v) => v.stock > 0);
+      if (this.selectedVariantIndex === -1) this.selectedVariantIndex = 0;
+      return;
+    }
 
-    if (product.type === 'servicio' && (product.price === null || product.price === undefined || product.price === 0)) {
+    this.pushToCart(product, null, product.price ?? 0, product.stock);
+  }
+
+  private pushToCart(
+    product: Product,
+    variantName: string | null,
+    price: number,
+    maxStock: number
+  ): void {
+    // Servicios sin precio: pedir el precio al momento de vender
+    if (
+      product.type === 'servicio' &&
+      (product.price === null || product.price === undefined || product.price === 0)
+    ) {
       const input = window.prompt(`"${product.name}" no tiene precio.\nIndica el precio del servicio para agregarlo a la venta:`, '');
       if (input === null) return;
       const parsed = Number(input.trim());
@@ -126,9 +151,14 @@ export class MisVentasComponent {
       price = parsed;
     }
 
-    const existing = this.cart.find((item) => item.productId === product._id);
+    const itemName = variantName ? `${product.name} - ${variantName}` : product.name;
+    const existing = this.cart.find(
+      (item) => item.productId === product._id && item.variantName === variantName
+    );
     if (existing) {
       if (existing.maxStock !== null && existing.quantity + 1 > existing.maxStock) {
+        this.saleError = `Stock máximo de "${itemName}" alcanzado`;
+        setTimeout(() => (this.saleError = ''), 3000);
         return;
       }
       existing.quantity += 1;
@@ -138,11 +168,58 @@ export class MisVentasComponent {
     const hasStock = product.type === 'producto' && !product.isMadeToOrder;
     this.cart.push({
       productId: product._id,
-      name: product.name,
+      name: itemName,
       price,
       quantity: 1,
-      maxStock: hasStock ? product.stock : null
+      maxStock: hasStock ? maxStock : null,
+      variantName
     });
+  }
+
+  // --- Modal de variantes ---
+  getModalVariants(): Product['variants'] {
+    return this.variantModalProduct?.variants ?? [];
+  }
+
+  isModalVariantAvailable(index: number): boolean {
+    const product = this.variantModalProduct;
+    if (!product) return false;
+    if (product.isMadeToOrder) return true;
+    if (product.type === 'servicio') return true;
+    return (product.variants[index]?.stock ?? 0) > 0;
+  }
+
+  getModalVariantPrice(index: number): number | null {
+    const product = this.variantModalProduct;
+    if (!product) return null;
+    const variant = product.variants[index];
+    return variant?.price ?? product.price ?? null;
+  }
+
+  getModalVariantImage(index: number): string {
+    const product = this.variantModalProduct;
+    const variant = product?.variants[index];
+    return variant?.imageUrl || product?.imageUrl || '';
+  }
+
+  closeVariantModal(): void {
+    this.variantModalProduct = null;
+  }
+
+  onConfirmVariant(): void {
+    const product = this.variantModalProduct;
+    if (!product) return;
+
+    const variant = product.variants[this.selectedVariantIndex];
+    if (!variant) return;
+    if (!this.isModalVariantAvailable(this.selectedVariantIndex)) {
+      this.saleError = `"${variant.name}" no tiene stock disponible`;
+      return;
+    }
+
+    const price = variant.price ?? product.price ?? 0;
+    this.pushToCart(product, variant.name, price, variant.stock);
+    this.closeVariantModal();
   }
 
   changeQuantity(item: CartItem, delta: number): void {
@@ -197,7 +274,8 @@ export class MisVentasComponent {
       items: this.cart.map((item) => ({
         productId: item.productId,
         quantity: item.quantity,
-        price: item.price
+        price: item.price,
+        variantName: item.variantName ?? undefined
       })),
       paymentMethod: this.paymentMethod,
       customerName: this.paymentMethod === 'pendiente' ? this.customerName.trim() : undefined

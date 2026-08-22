@@ -65,7 +65,6 @@
             </div>
           </div>
         </div>
-
         <div class="cart-total">
           <span>Total:</span>
           <span>${{ getCartTotal().toFixed(2) }}</span>
@@ -254,6 +253,50 @@
 
     <div *ngIf="!reportLoading && reportSales().length === 0 && reportFrom && reportTo" class="center-message">
       No hay ventas en el rango seleccionado.
+    </div>
+  </div>
+</div>
+
+<!-- Modal para elegir la variante del producto en el POS -->
+<div class="modal-overlay" *ngIf="variantModalProduct">
+  <div class="variant-modal">
+    <h3 class="modal-title">Elige la variante</h3>
+    <p class="modal-subtitle">{{ variantModalProduct.name }}</p>
+
+    <div class="modal-variants">
+      <button
+        class="modal-variant"
+        *ngFor="let variant of getModalVariants(); let i = index"
+        [class.selected]="selectedVariantIndex === i"
+        [class.out-of-stock]="!isModalVariantAvailable(i)"
+        (click)="selectedVariantIndex = i"
+        [disabled]="!isModalVariantAvailable(i)"
+      >
+        <img
+          *ngIf="getModalVariantImage(i)"
+          [src]="getModalVariantImage(i)"
+          [alt]="variant.name"
+          class="modal-variant-img"
+        />
+        <div class="modal-variant-info">
+          <p class="modal-variant-name">{{ variant.name }}</p>
+          <p class="modal-variant-price">
+            {{ getModalVariantPrice(i) !== null ? ('$' + getModalVariantPrice(i)!.toFixed(2)) : 'Precio a definir' }}
+          </p>
+          <p class="modal-variant-stock" *ngIf="!isModalVariantAvailable(i)">Sin stock</p>
+        </div>
+      </button>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-secondary" (click)="closeVariantModal()">Cancelar</button>
+      <button
+        class="btn-primary"
+        (click)="onConfirmVariant()"
+        [disabled]="!isModalVariantAvailable(selectedVariantIndex)"
+      >
+        Agregar al carrito
+      </button>
     </div>
   </div>
 </div>

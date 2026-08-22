@@ -162,6 +162,112 @@
   font-weight: 400;
 }
 
+.variants-section {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem;
+  background: #fafafa;
+}
+
+.variants-title {
+  margin: 0 0 0.25rem;
+  font-size: 0.95rem;
+  color: #374151;
+}
+
+.variant-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px dashed #e5e7eb;
+  flex-wrap: wrap;
+}
+
+.variant-fields {
+  display: flex;
+  gap: 0.5rem;
+  flex: 1 1 260px;
+}
+
+.variant-fields input {
+  padding: 0.5rem 0.7rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  width: 100%;
+}
+
+.variant-name-input {
+  flex: 2;
+}
+
+.variant-price-input,
+.variant-stock-input {
+  flex: 1;
+}
+
+.variant-image {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.variant-image input[type='file'] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.variant-file-label {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.45rem 0.8rem;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px dashed #93c5fd;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.variant-file-label:hover {
+  background: #dbeafe;
+}
+
+.variant-thumb {
+  width: 42px;
+  height: 42px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.variant-remove-btn {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: none;
+  border-radius: 6px;
+  width: 30px;
+  height: 30px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.variant-remove-btn:hover {
+  background: #fecaca;
+}
+
+.add-variant-btn {
+  margin-top: 0.75rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+}
+
 .image-preview {
   margin-top: 1rem;
 }

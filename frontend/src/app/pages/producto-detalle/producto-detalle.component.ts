@@ -1,12 +1,12 @@
 import { Component, inject, signal } from '@angular/core';
-import { NgIf, DatePipe } from '@angular/common';
+import { NgIf, NgFor, DatePipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Product } from '../../models/product.model';
 import { ProductService } from '../../core/services/product.service';
 
 @Component({
   selector: 'app-producto-detalle',
-  imports: [NgIf, DatePipe, RouterLink],
+  imports: [NgIf, NgFor, DatePipe, RouterLink],
   templateUrl: './producto-detalle.component.html',
   styleUrl: './producto-detalle.component.css'
 })
@@ -17,6 +17,7 @@ export class ProductoDetalleComponent {
   readonly product = signal<Product | null>(null);
   readonly loading = signal(true);
   readonly error = signal('');
+  selectedVariant = 0;
 
   constructor() {
     const id = this.route.snapshot.paramMap.get('id');
@@ -39,6 +40,36 @@ export class ProductoDetalleComponent {
         this.loading.set(false);
       }
     });
+  }
+
+  hasVariants(): boolean {
+    const product = this.product();
+    return !!product && (product.variants ?? []).length > 0;
+  }
+
+  getVariantImage(index: number): string {
+    const product = this.product();
+    const variant = product?.variants[index];
+    return variant?.imageUrl || product?.imageUrl || '';
+  }
+
+  isVariantAvailable(index: number): boolean {
+    const product = this.product();
+    if (!product) return false;
+    if (product.isMadeToOrder) return true;
+    if (product.type === 'servicio') return true;
+    return (product.variants[index]?.stock ?? 0) > 0;
+  }
+
+  getVariantStock(index: number): number {
+    return this.product()?.variants[index]?.stock ?? 0;
+  }
+
+  getDisplayImage(): string {
+    if (this.hasVariants()) {
+      return this.getVariantImage(this.selectedVariant);
+    }
+    return this.product()?.imageUrl ?? '';
   }
 
   getSellerName(): string {
@@ -69,8 +100,11 @@ export class ProductoDetalleComponent {
     }
 
     const product = this.product();
+    const variant = this.hasVariants() ? product?.variants[this.selectedVariant] : null;
     const message = product
-      ? `Hola, me gustaría preguntar por el producto: ${product.name}`
+      ? variant
+        ? `Hola, me gustaría preguntar por el producto: ${product.name} - ${variant.name}`
+        : `Hola, me gustaría preguntar por el producto: ${product.name}`
       : 'Hola, me gustaría preguntar por un producto';
 
     return `https://wa.me/${full}?text=${encodeURIComponent(message)}`;
@@ -89,9 +123,16 @@ export class ProductoDetalleComponent {
     return 'Contactar por WhatsApp';
   }
 
+  // Precio visible: el de la variante seleccionada
   getPriceLabel(): string {
     const product = this.product();
     if (!product) return '';
+    if (this.hasVariants()) {
+      const variant = product.variants[this.selectedVariant];
+      const price = variant?.price ?? product.price;
+      if (price === null || price === undefined) return 'Cotizar';
+      return `$${price.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
     if (product.price === null || product.price === undefined) return 'Cotizar';
     return `$${product.price.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   }

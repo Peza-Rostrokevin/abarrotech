@@ -1,8 +1,8 @@
 import { Component, inject, signal } from '@angular/core';
-import { NgIf, NgFor, CurrencyPipe } from '@angular/common';
+import { NgIf, NgFor } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { Product } from '../../models/product.model';
+import { Product, ProductVariant } from '../../models/product.model';
 import { Category } from '../../models/category.model';
 import { ProductService } from '../../core/services/product.service';
 import { CategoryService } from '../../core/services/category.service';
@@ -11,7 +11,7 @@ type SortOption = 'recientes' | 'gustados' | 'precio-asc' | 'precio-desc' | 'nom
 
 @Component({
   selector: 'app-catalogo',
-  imports: [NgIf, NgFor, CurrencyPipe, FormsModule, RouterLink],
+  imports: [NgIf, NgFor, FormsModule, RouterLink],
   templateUrl: './catalogo.component.html',
   styleUrl: './catalogo.component.css'
 })
@@ -30,6 +30,91 @@ export class CatalogoComponent {
   selectedSellerId = '';
   sortOption: SortOption = 'gustados';
   filtersOpen = false;
+
+  // Variante seleccionada por producto (productId -> índice)
+  selectedVariant = new Map<string, number>();
+
+  hasVariants(product: Product): boolean {
+    return (product.variants ?? []).length > 0;
+  }
+
+  getVariantPrice(product: Product, index: number): number | null {
+    const variant = product.variants[index];
+    if (!variant) return null;
+    return variant.price ?? product.price ?? null;
+  }
+
+  getVariantImage(product: Product, index: number): string {
+    const variant = product.variants[index];
+    return variant?.imageUrl || product.imageUrl;
+  }
+
+  getVariantStock(product: Product, index: number): number {
+    const variant = product.variants[index];
+    return variant?.stock ?? 0;
+  }
+
+  isVariantAvailable(product: Product, index: number): boolean {
+    const stock = this.getVariantStock(product, index);
+    if (product.isMadeToOrder) return true;
+    return product.type === 'producto' ? stock > 0 : true;
+  }
+
+  // Precio mínimo entre variantes (para mostrar "Desde $X")
+  getMinPrice(product: Product): number | null {
+    if (!this.hasVariants(product)) return product.price ?? null;
+    const prices = product.variants
+      .map((v, i) => this.getVariantPrice(product, i))
+      .filter((p): p is number => p !== null && p !== undefined && p > 0);
+    if (prices.length === 0) return null;
+    return Math.min(...prices);
+  }
+
+  // Precio visible: el de la variante seleccionada o "Desde $X"
+  getDisplayPrice(product: Product): number | null {
+    if (!this.hasVariants(product)) return product.price ?? null;
+    const idx = this.selectedVariant.get(product._id);
+    if (idx !== undefined) {
+      return this.getVariantPrice(product, idx);
+    }
+    return this.getMinPrice(product);
+  }
+
+  getDisplayImage(product: Product): string {
+    if (!this.hasVariants(product)) return product.imageUrl;
+    const idx = this.selectedVariant.get(product._id);
+    if (idx !== undefined) {
+      return this.getVariantImage(product, idx);
+    }
+    return product.imageUrl;
+  }
+
+  isDisplayedVariantAvailable(product: Product): boolean {
+    if (!this.hasVariants(product)) return product.isAvailable;
+    const idx = this.selectedVariant.get(product._id);
+    if (idx === undefined) {
+      // Sin selección: disponible si al menos una variante lo está
+      return product.variants.some((_, i) => this.isVariantAvailable(product, i));
+    }
+    return this.isVariantAvailable(product, idx);
+  }
+
+  getPriceLabel(product: Product): string {
+    const price = this.getDisplayPrice(product);
+    if (price === null || price === undefined) return 'Cotizar';
+    if (this.hasVariants(product) && this.selectedVariant.get(product._id) === undefined) {
+      return `Desde $${price.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+    return `$${price.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+
+  onSelectVariant(product: Product, index: number, event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.selectedVariant.set(product._id, index);
+    // Forzar re-render: se reasigna el Map para que Angular detecte el cambio
+    this.selectedVariant = new Map(this.selectedVariant);
+  }
 
   toggleFilters(): void {
     this.filtersOpen = !this.filtersOpen;

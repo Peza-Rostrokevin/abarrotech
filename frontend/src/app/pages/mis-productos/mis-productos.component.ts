@@ -1,10 +1,18 @@
 import { Component, inject, signal } from '@angular/core';
 import { NgIf, NgFor, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Product, ProductPayload } from '../../models/product.model';
+import { Product, ProductPayload, ProductVariantPayload } from '../../models/product.model';
 import { Category } from '../../models/category.model';
 import { ProductService } from '../../core/services/product.service';
 import { CategoryService } from '../../core/services/category.service';
+
+interface VariantFormRow {
+  name: string;
+  price: number | null;
+  stock: number;
+  imageUrl: string;
+  imageFile: File | null;
+}
 
 @Component({
   selector: 'app-mis-productos',
@@ -34,6 +42,8 @@ export class MisProductosComponent {
     location: '',
     description: ''
   };
+  hasVariants = false;
+  variantRows: VariantFormRow[] = [];
   selectedFile: File | null = null;
   previewUrl = '';
   formError = '';
@@ -78,6 +88,8 @@ export class MisProductosComponent {
     if (this.form.type === 'servicio') {
       this.form.stock = 0;
       this.form.isMadeToOrder = false;
+      this.hasVariants = false;
+      this.variantRows = [];
     }
     this.syncAvailability();
   }
@@ -135,6 +147,14 @@ export class MisProductosComponent {
       location: product.location,
       description: product.description
     };
+    this.hasVariants = (product.variants ?? []).length > 0;
+    this.variantRows = (product.variants ?? []).map((v) => ({
+      name: v.name,
+      price: v.price ?? null,
+      stock: v.stock ?? 0,
+      imageUrl: v.imageUrl ?? '',
+      imageFile: null
+    }));
     this.selectedFile = null;
     this.previewUrl = product.imageUrl;
     this.formError = '';
@@ -223,16 +243,82 @@ export class MisProductosComponent {
     this.handleFile(file);
   }
 
+  onVariantsToggle(checked: boolean): void {
+    this.hasVariants = checked;
+    if (checked && this.variantRows.length === 0) {
+      this.addVariantRow();
+    }
+  }
+
+  addVariantRow(): void {
+    this.variantRows.push({ name: '', price: null, stock: 0, imageUrl: '', imageFile: null });
+  }
+
+  removeVariantRow(index: number): void {
+    this.variantRows.splice(index, 1);
+  }
+
+  onVariantFileSelected(event: Event, index: number): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    const row = this.variantRows[index];
+    if (!row) return;
+
+    if (!file.type.startsWith('image/')) {
+      this.formError = `La imagen de "${row.name || 'la variante'}" no es una imagen válida`;
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      this.formError = `La imagen de "${row.name || 'la variante'}" no puede superar los 5 MB`;
+      return;
+    }
+
+    row.imageFile = file;
+    row.imageUrl = URL.createObjectURL(file);
+  }
+
+  private buildVariantsPayload(): ProductVariantPayload[] {
+    return this.variantRows.map((row) => ({
+      name: row.name,
+      price: row.price === null || row.price === undefined || row.price === 0 ? null : row.price,
+      stock: row.stock,
+      imageUrl: row.imageUrl,
+      imageFile: row.imageFile
+    }));
+  }
+
   onSubmit(): void {
     if (!this.form.name || !this.form.location) {
       this.formError = 'Nombre y ubicación son obligatorios';
       return;
     }
-    if (this.isProduct && (this.form.price === null || this.form.price === undefined || this.form.price <= 0)) {
-      this.formError = 'El precio es obligatorio para productos';
-      return;
+
+    const variantsPayload = this.hasVariants ? this.buildVariantsPayload() : [];
+
+    if (this.hasVariants) {
+      if (variantsPayload.length === 0) {
+        this.formError = 'Agrega al menos una variante';
+        return;
+      }
+      const emptyName = variantsPayload.some((v) => !v.name.trim());
+      if (emptyName) {
+        this.formError = 'Todas las variantes necesitan un nombre';
+        return;
+      }
+      const names = variantsPayload.map((v) => v.name.trim().toLowerCase());
+      if (new Set(names).size !== names.length) {
+        this.formError = 'No puedes tener dos variantes con el mismo nombre';
+        return;
+      }
+      const noStock = variantsPayload.some((v) => v.stock <= 0);
+      if (noStock) {
+        this.formError = 'Todas las variantes necesitan stock mayor a 0';
+        return;
+      }
     }
-    if (!this.selectedFile && !this.previewUrl) {
+
+    if (!this.selectedFile && !this.previewUrl && !this.hasVariants) {
       this.formError = 'Debes seleccionar una imagen';
       return;
     }
@@ -251,7 +337,8 @@ export class MisProductosComponent {
       categoryId: this.form.categoryId || null,
       location: this.form.location,
       description: this.form.description,
-      imageFile: this.selectedFile
+      imageFile: this.selectedFile,
+      variants: variantsPayload
     };
 
     const editingId = this.editingId();
@@ -296,6 +383,8 @@ export class MisProductosComponent {
       location: '',
       description: ''
     };
+    this.hasVariants = false;
+    this.variantRows = [];
     this.selectedFile = null;
     this.previewUrl = '';
     this.formError = '';

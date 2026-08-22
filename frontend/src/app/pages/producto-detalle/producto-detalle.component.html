@@ -6,8 +6,8 @@
 
   <div *ngIf="!loading() && product() as product" class="detail-card">
     <div class="detail-image" [class.image-disabled]="!product.isAvailable">
-      <img *ngIf="product.imageUrl" [src]="product.imageUrl" [alt]="product.name" />
-      <div *ngIf="!product.imageUrl" class="no-image">Sin imagen</div>
+      <img *ngIf="getDisplayImage()" [src]="getDisplayImage()" [alt]="product.name" />
+      <div *ngIf="!getDisplayImage()" class="no-image">Sin imagen</div>
       <div *ngIf="!product.isAvailable" class="unavailable-overlay">
         <span>NO DISPONIBLE</span>
       </div>
@@ -32,6 +32,25 @@
           <span class="heart">♥</span>
           <span class="like-count">{{ product.likes }}</span>
         </button>
+      </div>
+
+      <!-- Selector de variantes con pestañas -->
+      <div class="variant-selector" *ngIf="hasVariants()">
+        <h3 class="variant-title">{{ product.type === 'servicio' ? 'Opción' : 'Sabor/Versión' }}</h3>
+        <div class="variant-tabs">
+          <button
+            class="variant-tab"
+            *ngFor="let variant of product.variants; let i = index"
+            [class.selected]="selectedVariant === i"
+            [class.out-of-stock]="!isVariantAvailable(i)"
+            (click)="selectedVariant = i"
+          >
+            {{ variant.name }}
+          </button>
+        </div>
+        <p class="variant-stock" *ngIf="!isVariantAvailable(selectedVariant)">
+          ⛔ Sin stock disponible
+        </p>
       </div>
 
       <div class="detail-section">

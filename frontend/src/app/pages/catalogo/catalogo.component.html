@@ -80,15 +80,15 @@
 
   <div class="product-grid">
     <a class="product-card" *ngFor="let product of filtered()" [routerLink]="['/producto', product._id]">
-      <div class="product-image" [class.image-disabled]="!product.isAvailable">
+      <div class="product-image" [class.image-disabled]="!isDisplayedVariantAvailable(product)">
         <img
-          *ngIf="product.imageUrl"
-          [src]="product.imageUrl"
+          *ngIf="getDisplayImage(product)"
+          [src]="getDisplayImage(product)"
           [alt]="product.name"
           loading="lazy"
         />
-        <div *ngIf="!product.imageUrl" class="no-image">Sin imagen</div>
-        <div *ngIf="!product.isAvailable" class="unavailable-overlay">
+        <div *ngIf="!getDisplayImage(product)" class="no-image">Sin imagen</div>
+        <div *ngIf="!isDisplayedVariantAvailable(product)" class="unavailable-overlay">
           <span>NO DISPONIBLE</span>
         </div>
         <button
@@ -110,12 +110,22 @@
           </span>
         </div>
         <h3 class="product-name">{{ product.name }}</h3>
-        <p class="product-price" *ngIf="product.price !== null && product.price !== undefined">
-          {{ product.price | currency: 'MXN' }}
-        </p>
-        <p class="product-price product-price-none" *ngIf="product.price === null || product.price === undefined">
-          Cotizar
-        </p>
+        <p class="product-price">{{ getPriceLabel(product) }}</p>
+
+        <!-- Pestañas de variantes: se muestra la que no está disponible con estilo atenuado -->
+        <div class="variant-tabs" *ngIf="hasVariants(product)" (click)="$event.preventDefault(); $event.stopPropagation()">
+          <button
+            class="variant-tab"
+            *ngFor="let variant of product.variants; let i = index"
+            [class.selected]="selectedVariant.get(product._id) === i"
+            [class.out-of-stock]="!isVariantAvailable(product, i)"
+            (click)="onSelectVariant(product, i, $event)"
+            [title]="getVariantStock(product, i) === 0 ? 'Sin stock' : (getVariantPrice(product, i) ? 'Precio: $' + getVariantPrice(product, i) : '')"
+          >
+            {{ variant.name }}
+          </button>
+        </div>
+
         <p class="product-location">📍 {{ product.location }}</p>
         <p *ngIf="product.description" class="product-description">
           {{ product.description }}

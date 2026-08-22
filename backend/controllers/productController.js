@@ -2,19 +2,70 @@ const Product = require('../models/Product');
 const { uploadImage } = require('../config/cloudinary');
 
 const imageUrlOf = async (req) => {
-  if (req.file) {
-    return await uploadImage(req.file.buffer);
+  // Con upload.fields la imagen principal está en req.files.image[0];
+  // con upload.single estaría en req.file. Se soportan ambos.
+  const file = req.file || (req.files && req.files.image && req.files.image[0]);
+  if (file) {
+    return await uploadImage(file.buffer);
   }
   return (req.body.imageUrl || '').trim();
 };
 
 const toBool = (value) => value === true || value === 'true';
 
+const parseVariants = (body) => {
+  if (body.variants === undefined || body.variants === null || body.variants === '') {
+    return [];
+  }
+  if (Array.isArray(body.variants)) {
+    return body.variants;
+  }
+  try {
+    return JSON.parse(body.variants);
+  } catch {
+    return [];
+  }
+};
+
+const cleanVariants = (variants) =>
+  variants
+    .filter((v) => v && (v.name || '').trim())
+    .map((v) => ({
+      name: (v.name || '').trim(),
+      price: v.price === null || v.price === undefined || v.price === '' ? null : Number(v.price),
+      stock: Math.max(0, Number(v.stock) || 0),
+      imageUrl: (v.imageUrl || '').trim()
+    }));
+
 const applyAvailabilityRules = (data) => {
   if (data.type === 'producto' && !data.isMadeToOrder) {
-    data.isAvailable = data.stock > 0;
+    if (data.variants && data.variants.length > 0) {
+      // Con variantes: disponible si al menos una tiene stock
+      data.isAvailable = data.variants.some((v) => v.stock > 0);
+    } else {
+      data.isAvailable = data.stock > 0;
+    }
   }
   return data;
+};
+
+// Sube las imágenes nuevas de las variantes (campo variantImages + índices)
+const uploadVariantImages = async (req, variants) => {
+  const files = (req.files && req.files.variantImages) || [];
+  if (files.length === 0) return;
+
+  const rawIndexes = Array.isArray(req.body.variantImageIndexes)
+    ? req.body.variantImageIndexes
+    : typeof req.body.variantImageIndexes === 'string'
+      ? JSON.parse(req.body.variantImageIndexes || '[]')
+      : [];
+
+  for (let i = 0; i < files.length; i++) {
+    const idx = Number(rawIndexes[i]);
+    if (isNaN(idx) || !variants[idx]) continue;
+    variants[idx].imageUrl = await uploadImage(files[i].buffer);
+  }
+  return variants;
 };
 
 const getAllProducts = async (req, res) => {
@@ -88,15 +139,25 @@ const createProduct = async (req, res) => {
       return res.status(400).json({ message: 'Nombre y ubicación son obligatorios' });
     }
 
-    if (productType === 'producto' && (price === undefined || price === null || price === '')) {
+    const rawVariants = parseVariants(req.body);
+    const variants = cleanVariants(rawVariants);
+
+    if (productType === 'producto' && variants.length === 0 && (price === undefined || price === null || price === '')) {
       return res.status(400).json({ message: 'El precio es obligatorio para productos' });
+    }
+
+    if (variants.length > 0) {
+      const names = new Set(variants.map((v) => v.name.toLowerCase()));
+      if (names.size !== variants.length) {
+        return res.status(400).json({ message: 'No puedes tener dos variantes con el mismo nombre' });
+      }
     }
 
     const data = {
       name,
       price: productType === 'servicio' && (price === undefined || price === null || price === '')
         ? null
-        : Number(price),
+        : (price === undefined || price === null || price === '' ? null : Number(price)),
       imageUrl: await imageUrlOf(req),
       location,
       description: description || '',
@@ -105,8 +166,11 @@ const createProduct = async (req, res) => {
       stock: productType === 'producto' ? Number(stock) || 0 : 0,
       isMadeToOrder: productType === 'producto' && toBool(isMadeToOrder),
       isAvailable: toBool(isAvailable),
-      categoryId: categoryId || null
+      categoryId: categoryId || null,
+      variants
     };
+
+    await uploadVariantImages(req, data.variants);
 
     applyAvailabilityRules(data);
 
@@ -167,13 +231,27 @@ const updateProduct = async (req, res) => {
     }
 
     product.name = name ?? product.name;
-    if (req.file) {
+    const hasNewImage = !!(req.file || (req.files && req.files.image && req.files.image[0]));
+    if (hasNewImage) {
       product.imageUrl = await imageUrlOf(req);
     } else if (req.body.imageUrl !== undefined) {
       product.imageUrl = req.body.imageUrl.trim();
     }
     product.location = location ?? product.location;
     product.description = description ?? product.description;
+
+    // Variantes: si vienen en el request se reemplazan por completo
+    if (req.body.variants !== undefined) {
+      const newVariants = cleanVariants(parseVariants(req.body));
+      if (newVariants.length > 0) {
+        const names = new Set(newVariants.map((v) => v.name.toLowerCase()));
+        if (names.size !== newVariants.length) {
+          return res.status(400).json({ message: 'No puedes tener dos variantes con el mismo nombre' });
+        }
+      }
+      product.variants = newVariants;
+      await uploadVariantImages(req, product.variants);
+    }
 
     applyAvailabilityRules(product);
 

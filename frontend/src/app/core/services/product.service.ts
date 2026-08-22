@@ -35,17 +35,19 @@ export class ProductService {
   }
 
   createProduct(payload: ProductPayload): Observable<Product> {
-    if (payload.imageFile) {
+    const hasFiles = !!payload.imageFile || this.hasVariantFiles(payload);
+    if (hasFiles) {
       return this.http.post<Product>(`${this.apiUrl}/products`, this.buildFormData(payload));
     }
-    return this.http.post<Product>(`${this.apiUrl}/products`, payload);
+    return this.http.post<Product>(`${this.apiUrl}/products`, this.toJsonPayload(payload));
   }
 
   updateProduct(id: string, payload: Partial<ProductPayload>): Observable<Product> {
-    if (payload.imageFile) {
+    const hasFiles = !!payload.imageFile || this.hasVariantFiles(payload);
+    if (hasFiles) {
       return this.http.put<Product>(`${this.apiUrl}/products/${id}`, this.buildFormData(payload));
     }
-    return this.http.put<Product>(`${this.apiUrl}/products/${id}`, payload);
+    return this.http.put<Product>(`${this.apiUrl}/products/${id}`, this.toJsonPayload(payload));
   }
 
   deleteProduct(id: string): Observable<{ message: string }> {
@@ -54,6 +56,23 @@ export class ProductService {
 
   toggleLike(id: string, action: 'like' | 'unlike'): Observable<{ likes: number }> {
     return this.http.post<{ likes: number }>(`${this.apiUrl}/products/${id}/like`, { action });
+  }
+
+  private hasVariantFiles(payload: Partial<ProductPayload>): boolean {
+    return (payload.variants ?? []).some((v) => !!v.imageFile);
+  }
+
+  private toJsonPayload(payload: Partial<ProductPayload>): Record<string, unknown> {
+    const body: Record<string, unknown> = { ...payload };
+    delete (body as { imageFile?: unknown }).imageFile;
+    const variants = body['variants'] as ProductPayload['variants'] | undefined;
+    if (variants !== undefined) {
+      body['variants'] = variants.map((v) => {
+        const { imageFile, ...rest } = v;
+        return { ...rest, imageUrl: imageFile ? undefined : rest.imageUrl ?? '' };
+      });
+    }
+    return body;
   }
 
   private buildFormData(payload: Partial<ProductPayload>): FormData {
@@ -68,6 +87,25 @@ export class ProductService {
     if (payload.description !== undefined) formData.append('description', payload.description);
     if (payload.categoryId !== undefined) formData.append('categoryId', payload.categoryId ?? '');
     if (payload.imageFile) formData.append('image', payload.imageFile);
+
+    // Variantes: las sin imagen van en el JSON; las con imagen aparte + índice
+    if (payload.variants !== undefined) {
+      const jsonVariants: { name: string; price: number | null; stock: number; imageUrl: string }[] = [];
+      const indexes: number[] = [];
+      payload.variants.forEach((v, i) => {
+        if (v.imageFile) {
+          formData.append('variantImages', v.imageFile);
+          indexes.push(i);
+          jsonVariants.push({ name: v.name, price: v.price, stock: v.stock, imageUrl: '' });
+        } else {
+          jsonVariants.push({ name: v.name, price: v.price, stock: v.stock, imageUrl: v.imageUrl ?? '' });
+        }
+      });
+      formData.append('variants', JSON.stringify(jsonVariants));
+      if (indexes.length > 0) {
+        formData.append('variantImageIndexes', JSON.stringify(indexes));
+      }
+    }
     return formData;
   }
 }

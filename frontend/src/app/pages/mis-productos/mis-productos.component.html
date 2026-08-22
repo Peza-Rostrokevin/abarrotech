@@ -99,6 +99,74 @@
           </label>
         </div>
 
+        <div class="form-group full" *ngIf="isProduct && !form.isMadeToOrder">
+          <label class="checkbox-label">
+            <input
+              type="checkbox"
+              name="hasVariants"
+              [checked]="hasVariants"
+              (change)="onVariantsToggle($event.target.checked)"
+            />
+            Este producto tiene variantes (sabores, colores, tamaños...)
+            <span class="checkbox-hint">(cada variante con su propio stock, precio e imagen opcional)</span>
+          </label>
+        </div>
+
+        <div *ngIf="hasVariants" class="form-group full variants-section">
+          <h3 class="variants-title">Variantes</h3>
+          <p class="checkbox-hint">
+            Si dejas el precio vacío heredará el precio del producto.
+            Si dejas la imagen vacía se usará la imagen del producto.
+          </p>
+
+          <div class="variant-row" *ngFor="let row of variantRows; let i = index">
+            <div class="variant-fields">
+              <input
+                type="text"
+                class="variant-name-input"
+                [(ngModel)]="row.name"
+                [name]="'variantName' + i"
+                placeholder="Nombre (ej. Naranja, Verde-Grande)"
+              />
+              <input
+                type="number"
+                class="variant-price-input"
+                [(ngModel)]="row.price"
+                [name]="'variantPrice' + i"
+                min="0"
+                step="0.01"
+                [placeholder]="'Precio (vacío = ' + (form.price || '?') + ')'"
+              />
+              <input
+                type="number"
+                class="variant-stock-input"
+                [(ngModel)]="row.stock"
+                [name]="'variantStock' + i"
+                min="0"
+                step="1"
+                placeholder="Stock"
+              />
+            </div>
+            <div class="variant-image">
+              <input
+                type="file"
+                [id]="'variantImage' + i"
+                accept="image/*"
+                (change)="onVariantFileSelected($event, i)"
+              />
+              <label [for]="'variantImage' + i" class="variant-file-label">
+                {{ row.imageUrl ? 'Cambiar imagen' : 'Subir imagen' }}
+              </label>
+              <img *ngIf="row.imageUrl" [src]="row.imageUrl" class="variant-thumb" alt="Vista previa" />
+            </div>
+            <button type="button" class="variant-remove-btn" (click)="removeVariantRow(i)">✕</button>
+          </div>
+
+          <button type="button" class="btn-secondary add-variant-btn" (click)="addVariantRow()">
+            + Agregar otra variante
+          </button>
+        </div>
+
         <div class="form-group full">
           <label for="location">Ubicación (dónde encontrarlo) *</label>
           <input type="text" id="location" name="location" [(ngModel)]="form.location" placeholder="Ej: Ciudad de México, Centro Comercial Plaza Norte" required />

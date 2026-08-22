@@ -16,8 +16,8 @@ router.get('/', getAllProducts);
 router.get('/mine', protect, getMyProducts);
 router.get('/:id', getProductById);
 router.post('/:id/like', toggleLikeProduct);
-router.post('/', protect, upload.single('image'), createProduct);
-router.put('/:id', protect, upload.single('image'), updateProduct);
+router.post('/', protect, upload.fields([{ name: 'image', maxCount: 1 }, { name: 'variantImages', maxCount: 20 }]), createProduct);
+router.put('/:id', protect, upload.fields([{ name: 'image', maxCount: 1 }, { name: 'variantImages', maxCount: 20 }]), updateProduct);
 router.delete('/:id', protect, deleteProduct);
 
 module.exports = router;

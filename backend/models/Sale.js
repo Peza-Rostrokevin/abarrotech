@@ -20,6 +20,10 @@ const saleItemSchema = new mongoose.Schema(
       type: Number,
       required: true,
       min: 1
+    },
+    variantName: {
+      type: String,
+      default: ''
     }
   },
   { _id: false }

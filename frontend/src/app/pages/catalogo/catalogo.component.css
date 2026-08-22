@@ -331,6 +331,48 @@
   font-size: 0.8rem;
 }
 
+.variant-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0 0 0.5rem;
+}
+
+.variant-tab {
+  padding: 0.25rem 0.7rem;
+  border: 1px solid #d1d5db;
+  border-radius: 999px;
+  background: #fff;
+  color: #374151;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.variant-tab:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+.variant-tab.selected {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}
+
+.variant-tab.out-of-stock {
+  opacity: 0.45;
+  text-decoration: line-through;
+}
+
+.variant-tab.out-of-stock.selected {
+  opacity: 0.75;
+  text-decoration: none;
+  background: #9ca3af;
+  border-color: #9ca3af;
+}
+
 .center-message {
   text-align: center;
   padding: 3rem 0;

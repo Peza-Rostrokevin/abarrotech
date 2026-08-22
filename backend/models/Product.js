@@ -54,6 +54,34 @@ const productSchema = new mongoose.Schema(
       trim: true,
       default: ''
     },
+    // Variantes del producto (ej. sabores). Si el array está vacío,
+    // el producto se maneja como hoy (precio/stock/imagen directos)
+    variants: {
+      type: [
+        {
+          name: {
+            type: String,
+            required: [true, 'El nombre de la variante es obligatorio'],
+            trim: true
+          },
+          price: {
+            type: Number,
+            min: [0, 'El precio no puede ser negativo'],
+            default: null
+          },
+          stock: {
+            type: Number,
+            min: [0, 'El stock no puede ser negativo'],
+            default: 0
+          },
+          imageUrl: {
+            type: String,
+            default: ''
+          }
+        }
+      ],
+      default: []
+    },
     sellerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',

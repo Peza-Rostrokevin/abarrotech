@@ -1,5 +1,12 @@
 export type ProductType = 'producto' | 'servicio';
 
+export interface ProductVariant {
+  name: string;
+  price: number | null;
+  stock: number;
+  imageUrl: string;
+}
+
 export interface Product {
   _id: string;
   name: string;
@@ -13,9 +20,18 @@ export interface Product {
   imageUrl: string;
   location: string;
   description: string;
+  variants: ProductVariant[];
   sellerId: string | { _id: string; name: string; email?: string; phone?: string };
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface ProductVariantPayload {
+  name: string;
+  price: number | null;
+  stock: number;
+  imageUrl?: string;
+  imageFile?: File | null;
 }
 
 export interface ProductPayload {
@@ -29,4 +45,5 @@ export interface ProductPayload {
   description: string;
   categoryId?: string | null;
   imageFile?: File | null;
+  variants?: ProductVariantPayload[];
 }
