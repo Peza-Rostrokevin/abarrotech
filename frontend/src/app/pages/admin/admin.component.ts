@@ -211,4 +211,9 @@ export class AdminComponent {
     if (typeof product.sellerId === 'string') return 'Desconocido';
     return product.sellerId?.name ?? 'Desconocido';
   }
+
+  getProductLocation(product: Product): string {
+    if (typeof product.sellerId === 'string') return product.location || '-';
+    return product.sellerId?.location || product.location || '-';
+  }
 }

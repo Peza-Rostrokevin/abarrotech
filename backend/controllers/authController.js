@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 
 const register = async (req, res) => {
   try {
-    const { name, email, password, phone, inviteToken } = req.body;
+    const { name, email, password, phone, location, inviteToken } = req.body;
 
     if (!name || !email || !password || !phone) {
       return res.status(400).json({ message: 'Nombre, email, contraseña y teléfono son obligatorios' });
@@ -49,6 +49,7 @@ const register = async (req, res) => {
       email: normalizedEmail,
       password,
       phone,
+      location: location || '',
       role: 'vendedor'
     });
 
@@ -63,6 +64,7 @@ const register = async (req, res) => {
       email: user.email,
       role: user.role,
       phone: user.phone,
+      location: user.location,
       token: generateToken(user._id)
     });
   } catch (error) {
@@ -98,6 +100,7 @@ const login = async (req, res) => {
       email: user.email,
       role: user.role,
       phone: user.phone,
+      location: user.location,
       token: generateToken(user._id)
     });
   } catch (error) {
@@ -112,13 +115,14 @@ const getMe = async (req, res) => {
     name: req.user.name,
     email: req.user.email,
     role: req.user.role,
-    phone: req.user.phone
+    phone: req.user.phone,
+    location: req.user.location
   });
 };
 
 const updateProfile = async (req, res) => {
   try {
-    const { name, email, phone } = req.body;
+    const { name, email, phone, location } = req.body;
 
     if (!name || !email || !phone) {
       return res.status(400).json({ message: 'Nombre, email y WhatsApp son obligatorios' });
@@ -135,6 +139,9 @@ const updateProfile = async (req, res) => {
       }
     }
 
+    if (req.body.location !== undefined) {
+      req.user.location = req.body.location.trim();
+    }
     req.user.name = name;
     req.user.email = email;
     req.user.phone = phone;
@@ -145,7 +152,8 @@ const updateProfile = async (req, res) => {
       name: req.user.name,
       email: req.user.email,
       role: req.user.role,
-      phone: req.user.phone
+      phone: req.user.phone,
+      location: req.user.location
     });
   } catch (error) {
     console.error(error);

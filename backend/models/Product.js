@@ -46,8 +46,8 @@ const productSchema = new mongoose.Schema(
     },
     location: {
       type: String,
-      required: [true, 'La ubicacion es obligatoria'],
-      trim: true
+      trim: true,
+      default: ''
     },
     description: {
       type: String,

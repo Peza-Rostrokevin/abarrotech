@@ -174,7 +174,7 @@ export class CatalogoComponent {
       list = list.filter(
         (p) =>
           p.name.toLowerCase().includes(term) ||
-          p.location.toLowerCase().includes(term) ||
+          (this.getSellerName(p)?.toLowerCase().includes(term) ?? false) ||
           p.description.toLowerCase().includes(term)
       );
     }
@@ -224,6 +224,13 @@ export class CatalogoComponent {
   getSellerName(product: Product): string {
     if (typeof product.sellerId === 'string') return '';
     return product.sellerId?.name ?? '';
+  }
+
+  getSellerLocation(product: Product): string {
+    if (typeof product.sellerId === 'string') return product.location;
+    const sellerLocation = product.sellerId?.location ?? '';
+    if (sellerLocation) return sellerLocation;
+    return product.location;
   }
 
   getCategoryName(categoryId: string | null | { _id: string; name: string } | undefined): string {

@@ -40,6 +40,19 @@
             <small class="field-hint">10 dígitos, sin espacios ni guiones</small>
           </div>
 
+          <div class="form-group">
+            <label for="location">Ubicación del negocio *</label>
+            <input
+              type="text"
+              id="location"
+              name="location"
+              [(ngModel)]="profile.location"
+              required
+              placeholder="Ej: Ciudad de México, Centro Comercial Plaza Norte"
+            />
+            <small class="field-hint">Se muestra en todos tus productos del catálogo</small>
+          </div>
+
           <div *ngIf="profileError" class="error-box">{{ profileError }}</div>
           <div *ngIf="profileSuccess" class="success-box">{{ profileSuccess }}</div>
 

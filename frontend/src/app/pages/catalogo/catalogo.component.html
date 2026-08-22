@@ -126,7 +126,7 @@
           </button>
         </div>
 
-        <p class="product-location">📍 {{ product.location }}</p>
+        <p class="product-location">📍 {{ getSellerLocation(product) }}</p>
         <p *ngIf="product.description" class="product-description">
           {{ product.description }}
         </p>

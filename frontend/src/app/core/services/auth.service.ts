@@ -32,7 +32,7 @@ export class AuthService {
     );
   }
 
-  updateProfile(data: { name: string; email: string; phone: string }): Observable<User> {
+  updateProfile(data: { name: string; email: string; phone: string; location?: string }): Observable<User> {
     return this.http.put<User>(`${this.apiUrl}/auth/profile`, data).pipe(
       tap((user) => this.updateStoredUser(user))
     );

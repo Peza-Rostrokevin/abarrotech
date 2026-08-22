@@ -47,6 +47,19 @@
       </div>
 
       <div class="form-group">
+        <label for="location">Ubicación del negocio *</label>
+        <input
+          type="text"
+          id="location"
+          name="location"
+          [(ngModel)]="location"
+          required
+          placeholder="Ej: Ciudad de México, Centro Comercial Plaza Norte"
+        />
+        <small class="field-hint">Se mostrará en todos tus productos. Podrás cambiarla en tu perfil.</small>
+      </div>
+
+      <div class="form-group">
         <label for="password">Contraseña (mínimo 6 caracteres)</label>
         <input
           type="password"

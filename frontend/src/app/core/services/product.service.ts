@@ -83,7 +83,6 @@ export class ProductService {
     if (payload.stock !== undefined) formData.append('stock', String(payload.stock));
     if (payload.isAvailable !== undefined) formData.append('isAvailable', String(payload.isAvailable));
     if (payload.isMadeToOrder !== undefined) formData.append('isMadeToOrder', String(payload.isMadeToOrder));
-    if (payload.location !== undefined) formData.append('location', payload.location);
     if (payload.description !== undefined) formData.append('description', payload.description);
     if (payload.categoryId !== undefined) formData.append('categoryId', payload.categoryId ?? '');
     if (payload.imageFile) formData.append('image', payload.imageFile);

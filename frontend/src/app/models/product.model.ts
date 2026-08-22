@@ -7,6 +7,14 @@ export interface ProductVariant {
   imageUrl: string;
 }
 
+export interface ProductSeller {
+  _id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  location?: string;
+}
+
 export interface Product {
   _id: string;
   name: string;
@@ -21,7 +29,7 @@ export interface Product {
   location: string;
   description: string;
   variants: ProductVariant[];
-  sellerId: string | { _id: string; name: string; email?: string; phone?: string };
+  sellerId: string | ProductSeller;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -41,7 +49,6 @@ export interface ProductPayload {
   stock: number;
   isAvailable: boolean;
   isMadeToOrder: boolean;
-  location: string;
   description: string;
   categoryId?: string | null;
   imageFile?: File | null;

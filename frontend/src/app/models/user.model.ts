@@ -6,6 +6,7 @@ export interface User {
   email: string;
   role: Role;
   phone?: string;
+  location?: string;
   token?: string;
   createdAt?: string;
 }
@@ -20,5 +21,6 @@ export interface RegisterRequest {
   email: string;
   password: string;
   phone: string;
+  location?: string;
   inviteToken: string;
 }

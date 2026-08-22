@@ -79,6 +79,15 @@ export class ProductoDetalleComponent {
     return product.sellerId?.name ?? '';
   }
 
+  getSellerLocation(): string {
+    const product = this.product();
+    if (!product) return '';
+    if (typeof product.sellerId === 'string') return product.location;
+    const sellerLocation = product.sellerId?.location ?? '';
+    if (sellerLocation) return sellerLocation;
+    return product.location;
+  }
+
   getSellerPhone(): string {
     const product = this.product();
     if (!product) return '';

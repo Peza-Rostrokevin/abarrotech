@@ -18,7 +18,8 @@ export class PerfilComponent {
   profile = {
     name: '',
     email: '',
-    phone: ''
+    phone: '',
+    location: ''
   };
   profileError = '';
   profileSuccess = '';
@@ -39,7 +40,8 @@ export class PerfilComponent {
       this.profile = {
         name: u.name,
         email: u.email,
-        phone: u.phone ?? ''
+        phone: u.phone ?? '',
+        location: u.location ?? ''
       };
     }
   }
@@ -51,6 +53,10 @@ export class PerfilComponent {
   onSaveProfile(): void {
     if (!this.profile.name || !this.profile.email || !this.profile.phone) {
       this.profileError = 'Nombre, email y WhatsApp son obligatorios';
+      return;
+    }
+    if (!this.profile.location.trim()) {
+      this.profileError = 'La ubicación del negocio es obligatoria';
       return;
     }
     if (!/^\d{10}$/.test(this.profile.phone)) {

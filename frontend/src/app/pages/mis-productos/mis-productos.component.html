@@ -57,7 +57,7 @@
           />
         </div>
 
-        <div class="form-group" *ngIf="isProduct">
+        <div class="form-group" *ngIf="isProduct && !hasVariants">
           <label for="stock">Stock (piezas disponibles)</label>
           <input
             type="number"
@@ -153,6 +153,7 @@
                   [id]="'variantStock' + i"
                   class="variant-stock-input"
                   [(ngModel)]="row.stock"
+                  (ngModelChange)="syncAvailability()"
                   [name]="'variantStock' + i"
                   min="0"
                   step="1"
@@ -200,11 +201,6 @@
           <button type="button" class="btn-secondary add-variant-btn" (click)="addVariantRow()">
             + Agregar otra variante
           </button>
-        </div>
-
-        <div class="form-group full">
-          <label for="location">Ubicación (dónde encontrarlo) *</label>
-          <input type="text" id="location" name="location" [(ngModel)]="form.location" placeholder="Ej: Ciudad de México, Centro Comercial Plaza Norte" required />
         </div>
 
         <div class="form-group full">
@@ -291,10 +287,13 @@
         <p class="product-price product-price-none" *ngIf="product.price === null || product.price === undefined">
           Cotizar
         </p>
-        <p *ngIf="product.type === 'producto' && !product.isMadeToOrder" class="product-stock">
+        <p *ngIf="product.type === 'producto' && !product.isMadeToOrder && !hasVariantsOf(product)" class="product-stock">
           Stock: {{ product.stock }} pieza{{ product.stock === 1 ? '' : 's' }}
         </p>
-        <p class="product-location">📍 {{ product.location }}</p>
+        <p *ngIf="product.type === 'producto' && !product.isMadeToOrder && hasVariantsOf(product)" class="product-stock">
+          {{ variantStockSummary(product) }}
+        </p>
+        <p class="product-location">📍 {{ sellerLocation() }}</p>
         <p *ngIf="product.description" class="product-description">{{ product.description }}</p>
         <div class="product-actions">
           <button class="btn-edit" (click)="openEditForm(product)">Editar</button>

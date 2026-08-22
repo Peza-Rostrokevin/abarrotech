@@ -5,6 +5,7 @@ import { Product, ProductPayload, ProductVariantPayload } from '../../models/pro
 import { Category } from '../../models/category.model';
 import { ProductService } from '../../core/services/product.service';
 import { CategoryService } from '../../core/services/category.service';
+import { AuthService } from '../../core/services/auth.service';
 
 interface VariantFormRow {
   name: string;
@@ -23,11 +24,13 @@ interface VariantFormRow {
 export class MisProductosComponent {
   private readonly productService = inject(ProductService);
   private readonly categoryService = inject(CategoryService);
+  private readonly authService = inject(AuthService);
 
   readonly products = signal<Product[]>([]);
   readonly categories = signal<Category[]>([]);
   readonly loading = signal(true);
   readonly error = signal('');
+  readonly sellerLocation = signal('');
   readonly showForm = signal(false);
   readonly editingId = signal<string | null>(null);
 
@@ -39,7 +42,6 @@ export class MisProductosComponent {
     isAvailable: true,
     isMadeToOrder: false,
     categoryId: '',
-    location: '',
     description: ''
   };
   hasVariants = false;
@@ -54,6 +56,8 @@ export class MisProductosComponent {
   variantDragging = -1;
 
   constructor() {
+    const me = this.authService.currentUser();
+    this.sellerLocation.set(me?.location ?? '');
     this.loadMyProducts();
     this.loadCategories();
   }
@@ -72,6 +76,17 @@ export class MisProductosComponent {
     if (typeof categoryId !== 'string') return categoryId.name;
     const cat = this.categories().find((c) => c._id === categoryId);
     return cat?.name ?? 'Sin categoría';
+  }
+
+  hasVariantsOf(product: Product): boolean {
+    return (product.variants ?? []).length > 0;
+  }
+
+  variantStockSummary(product: Product): string {
+    const variants = product.variants ?? [];
+    const total = variants.reduce((sum, v) => sum + (v.stock ?? 0), 0);
+    const parts = variants.map((v) => `${v.name || 'Variante'}: ${v.stock ?? 0}`);
+    return `Stock: ${total} pieza${total === 1 ? '' : 's'} en total (${parts.join(', ')})`;
   }
 
   get isProduct(): boolean {
@@ -111,8 +126,11 @@ export class MisProductosComponent {
     this.form.isAvailable = !checked;
   }
 
-  private syncAvailability(): void {
-    if (this.isStockBased) {
+  syncAvailability(): void {
+    if (!this.isStockBased) return;
+    if (this.hasVariants) {
+      this.form.isAvailable = this.variantRows.some((r) => r.stock > 0);
+    } else {
       this.form.isAvailable = this.form.stock > 0;
     }
   }
@@ -146,7 +164,6 @@ export class MisProductosComponent {
       isAvailable: product.isAvailable ?? true,
       isMadeToOrder: product.isMadeToOrder ?? false,
       categoryId: typeof product.categoryId === 'string' ? product.categoryId : '',
-      location: product.location,
       description: product.description
     };
     this.hasVariants = (product.variants ?? []).length > 0;
@@ -250,6 +267,7 @@ export class MisProductosComponent {
     if (checked && this.variantRows.length === 0) {
       this.addVariantRow();
     }
+    this.syncAvailability();
   }
 
   addVariantRow(): void {
@@ -344,8 +362,8 @@ export class MisProductosComponent {
   }
 
   onSubmit(): void {
-    if (!this.form.name || !this.form.location) {
-      this.formError = 'Nombre y ubicación son obligatorios';
+    if (!this.form.name) {
+      this.formError = 'El nombre del producto es obligatorio';
       return;
     }
 
@@ -386,11 +404,10 @@ export class MisProductosComponent {
       name: this.form.name,
       price: this.isProduct ? this.form.price : (this.form.price > 0 ? this.form.price : null),
       type: this.form.type,
-      stock: this.isStockBased ? this.form.stock : 0,
+      stock: this.hasVariants ? 0 : (this.isStockBased ? this.form.stock : 0),
       isAvailable: this.form.isAvailable,
       isMadeToOrder: this.isProduct && this.form.isMadeToOrder,
       categoryId: this.form.categoryId || null,
-      location: this.form.location,
       description: this.form.description,
       imageFile: this.selectedFile,
       variants: variantsPayload
@@ -435,7 +452,6 @@ export class MisProductosComponent {
       isAvailable: true,
       isMadeToOrder: false,
       categoryId: '',
-      location: '',
       description: ''
     };
     this.hasVariants = false;

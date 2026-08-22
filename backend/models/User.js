@@ -30,6 +30,11 @@ const userSchema = new mongoose.Schema(
     phone: {
       type: String,
       trim: true
+    },
+    location: {
+      type: String,
+      trim: true,
+      default: ''
     }
   },
   {

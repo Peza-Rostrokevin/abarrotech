@@ -97,7 +97,7 @@ const getAllProducts = async (req, res) => {
 
     const products = await Product.find(filter)
       .sort(sort)
-      .populate('sellerId', 'name')
+      .populate('sellerId', 'name location')
       .populate('categoryId', 'name');
     res.json(products);
   } catch (error) {
@@ -118,7 +118,7 @@ const getMyProducts = async (req, res) => {
 
 const getProductById = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id).populate('sellerId', 'name email phone');
+    const product = await Product.findById(req.params.id).populate('sellerId', 'name email phone location');
     if (!product) {
       return res.status(404).json({ message: 'Producto no encontrado' });
     }
@@ -135,8 +135,8 @@ const createProduct = async (req, res) => {
 
     const productType = type === 'servicio' ? 'servicio' : 'producto';
 
-    if (!name || !location) {
-      return res.status(400).json({ message: 'Nombre y ubicación son obligatorios' });
+    if (!name) {
+      return res.status(400).json({ message: 'El nombre del producto es obligatorio' });
     }
 
     const rawVariants = parseVariants(req.body);
@@ -159,7 +159,7 @@ const createProduct = async (req, res) => {
         ? null
         : (price === undefined || price === null || price === '' ? null : Number(price)),
       imageUrl: await imageUrlOf(req),
-      location,
+      location: location || req.user.location || '',
       description: description || '',
       sellerId: req.user._id,
       type: productType,
@@ -237,7 +237,13 @@ const updateProduct = async (req, res) => {
     } else if (req.body.imageUrl !== undefined) {
       product.imageUrl = req.body.imageUrl.trim();
     }
-    product.location = location ?? product.location;
+    // La ubicación vive en el vendedor; si el vendedor aún no tiene una,
+    // conserva la que trae el producto (compatibilidad con productos viejos)
+    if (req.user.location) {
+      product.location = req.user.location;
+    } else if (req.body.location !== undefined) {
+      product.location = req.body.location;
+    }
     product.description = description ?? product.description;
 
     // Variantes: si vienen en el request se reemplazan por completo

@@ -19,6 +19,7 @@ export class RegisterComponent {
   email = '';
   password = '';
   phone = '';
+  location = '';
   inviteToken = '';
   error = '';
   loading = false;
@@ -35,6 +36,10 @@ export class RegisterComponent {
   onSubmit(): void {
     if (!this.name || !this.email || !this.password || !this.phone) {
       this.error = 'Nombre, email, contraseña y WhatsApp son obligatorios';
+      return;
+    }
+    if (!this.location.trim()) {
+      this.error = 'La ubicación es obligatoria: indica dónde se encuentra tu negocio';
       return;
     }
     if (this.password.length < 6) {
@@ -59,6 +64,7 @@ export class RegisterComponent {
         email: this.email,
         password: this.password,
         phone: this.phone,
+        location: this.location.trim(),
         inviteToken: this.inviteToken
       })
       .subscribe({

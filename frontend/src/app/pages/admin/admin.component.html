@@ -139,7 +139,7 @@
               </div>
             </td>
             <td>{{ product.price | currency: 'MXN' }}</td>
-            <td>{{ product.location }}</td>
+            <td>{{ getProductLocation(product) }}</td>
             <td>{{ getSellerName(product) }}</td>
           </tr>
         </tbody>
